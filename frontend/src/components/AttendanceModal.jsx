@@ -84,23 +84,6 @@ export default function AttendanceModal({ isOpen, onClose, userProfile }) {
           </div>
 
           <div className="flex items-center gap-space-sm">
-            <div
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-label-md text-label-md shadow-2xs ${
-                isOverallSafe
-                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                  : 'bg-rose-50 text-rose-800 border border-rose-200'
-              }`}
-            >
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  isOverallSafe ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
-                }`}
-              ></span>
-              <span className="font-semibold">
-                {isOverallSafe ? 'Eligible for End-Semester Examinations' : 'Attendance Shortage (<75%)'}
-              </span>
-            </div>
-
             <button
               onClick={onClose}
               className="w-8 h-8 rounded-lg hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer"
