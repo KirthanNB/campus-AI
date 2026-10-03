@@ -18,8 +18,13 @@ export default function ChatPage() {
   const navigate = useNavigate();
   const { user, logout, token } = useAuthStore();
 
-  // Navigation & UI state
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Navigation & UI state: collapsed initially on mobile screens (< 1024px)
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 1024;
+    }
+    return false;
+  });
   const [activeModal, setActiveModal] = useState(null); // 'attendance' | 'timetable' | 'grievance' | 'news' | 'citation'
   const [citationData, setCitationData] = useState(null);
 
@@ -581,6 +586,14 @@ export default function ChatPage() {
           </div>
         )}
       </aside>
+
+      {/* Mobile Sidebar Backdrop Overlay */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 lg:hidden cursor-pointer"
+        />
+      )}
 
       {/* 2. MAIN WORKSPACE CONTAINER */}
       <div

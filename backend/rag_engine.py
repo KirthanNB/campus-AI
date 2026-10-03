@@ -337,11 +337,11 @@ HANDLING TIMETABLE & CAMPUS NEWS INQUIRIES:
 - Ground announcements in the Live Campus Announcements & Circulars.
 
 CITATION RULES (CRITICAL):
-- ONLY cite a source filename if your answer is directly derived from one of the documents in the "Official Institutional Records (Knowledge Base)" section (such as university regulations, examination policies, syllabus details, fee deadlines, hostel rules, or placement criteria).
-- If citing, format at the very end of your response on a new line:
+- Whenever you answer a question about university policies, hostel rules, curfew timings, mess schedules, examinations, grading, fees, syllabus, course details, clubs, or academic regulations using the "Official Institutional Records (Knowledge Base)" below, you MUST cite the exact filename.
+- End your response with the source tag on a new line at the very bottom:
 `🏷️ Source: [filename.md]`
-- If your answer is derived from the student's personal records (e.g. Live Student Attendance Records, Grievance Tickets, Profile context), OR if the query is a greeting or general conversational query: DO NOT append any source line, or output `🏷️ Source: None`.
-- STRICTLY DO NOT cite a syllabus document or unrelated document when answering attendance percentages, course eligibility, grievance tickets, or student profile queries.
+- ONLY omit the source tag or output `🏷️ Source: None` if the query is pure casual conversation / greeting, or strictly about personal attendance percentage numbers / grievance tickets.
+- If the student asks about hostel rules, campus facilities, curfews, exam schedules, or policies, ALWAYS cite the respective document (e.g. `hostel_and_campus_rules.md`, `academic_policies_and_attendance.md`).
 
 Student Profile Context:
 - Student Name: {user_name}
@@ -374,18 +374,17 @@ Official Institutional Records (Knowledge Base):
     try:
         raw_response = await invoke_llm_with_fallback(prompt, query)
         
-        # Parse citation only if Gemini explicitly cited an official knowledge base record
+        # Parse citation only if Gemini cited an official knowledge base record or if grounded in retrieved docs
         extracted_source = ""
         clean_answer = raw_response.strip()
 
-        # Look for 🏷️ Source: [Document Name] or Source: [Document Name] at the end
-        source_pattern = r'(?:🏷️\s*)?Source:\s*\[?(.*?)\]?$'
-        match = re.search(source_pattern, clean_answer, re.IGNORECASE | re.MULTILINE)
+        # Look for 🏷️ Source: [Document Name] or Source: [Document Name] anywhere near the end or within text
+        source_pattern = r'(?:🏷️\s*)?Source:\s*\[?(.*?)\]?(?:\s*$|\n)'
+        match = re.search(source_pattern, clean_answer, re.IGNORECASE)
         
         if match:
             raw_src = match.group(1).strip().strip("[]*`")
-            # Clean the source line from the visible answer text
-            clean_answer = re.sub(source_pattern, '', clean_answer, flags=re.IGNORECASE | re.MULTILINE).strip()
+            clean_answer = re.sub(source_pattern, '', clean_answer, flags=re.IGNORECASE).strip()
 
             if raw_src and raw_src.lower() not in ["none", "n/a", "null", "no document", "erp", "attendance record", "live attendance", "system"]:
                 if not raw_src.endswith(".md"):
@@ -401,6 +400,19 @@ Official Institutional Records (Knowledge Base):
                             break
                     if not extracted_source and list(sources_set):
                         extracted_source = list(sources_set)[0]
+
+        # Intelligent Grounding Fallback:
+        # If Gemini answered an informational campus question (not greeting/casual/personal attendance)
+        # and we retrieved high-confidence institutional documents, attach the top retrieved source!
+        if not extracted_source and sources_set:
+            q_lower = query.lower()
+            casual_terms = ["hi", "hello", "hey", "who are you", "what can you do", "help", "thank you", "thanks"]
+            is_casual = any(q_lower == t or q_lower.startswith(t + " ") for t in casual_terms)
+            is_personal_att = any(k in q_lower for k in ["my attendance", "my percentage", "how many classes", "am i detained", "my ticket", "my grievance"])
+            
+            if not is_casual and not is_personal_att:
+                # Assign the most relevant retrieved source
+                extracted_source = list(sources_set)[0]
 
         # Post-processing: Strictly remove any bunk or safe bunk lines
         sanitized_lines = []
