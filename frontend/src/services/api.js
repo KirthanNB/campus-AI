@@ -119,5 +119,9 @@ export const api = {
     }
     return data;
   },
+
+  getTickets() {
+    return this.getMyTickets();
+  },
 };
 

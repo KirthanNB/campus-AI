@@ -16,7 +16,8 @@ export default function InteractiveTicketCard({
   category = "Hostel Maintenance",
   initialTitle = "",
   initialDescription = "",
-  userProfile = {}
+  userProfile = {},
+  onSuccess
 }) {
   const [ticketCategory, setTicketCategory] = useState(category);
   const [title, setTitle] = useState(initialTitle || "");
@@ -49,6 +50,8 @@ export default function InteractiveTicketCard({
         priority: "Medium"
       });
       setSubmittedTicket(res);
+      window.dispatchEvent(new CustomEvent('ticket_submitted', { detail: res }));
+      if (onSuccess) onSuccess(res);
     } catch (err) {
       setError(err.message || "Failed to submit ticket. Please try again.");
     } finally {

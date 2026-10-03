@@ -215,14 +215,17 @@ async def generate_rag_response(
 
     formatted_context_list = []
     sources_set = set()
+    kb_dir = BASE_DIR / "knowledge_base"
     
     for doc_text, meta in zip(docs, metadatas):
-        doc_title = meta.get("title", meta.get("source", "Official College Record"))
-        sources_set.add(doc_title)
-        formatted_context_list.append(f"--- Document: {doc_title} ---\n{doc_text}")
+        doc_filename = meta.get("source", "")
+        doc_title = meta.get("title", doc_filename)
+        if doc_filename:
+            sources_set.add(doc_filename)
+        formatted_context_list.append(f"--- Document File: {doc_filename} (Title: {doc_title}) ---\n{doc_text}")
 
     context_str = "\n\n".join(formatted_context_list) if formatted_context_list else "No official records found."
-    fallback_source = list(sources_set)[0] if sources_set else "Official College Record"
+    fallback_source = list(sources_set)[0] if sources_set else "academic_policies_and_attendance.md"
 
     # Multilingual instruction
     lang_instruction = ""
@@ -267,8 +270,8 @@ HANDLING IN-SCOPE UNIVERSITY INQUIRIES & COMPLAINTS:
        - Tell the user: "Here is the complaint form. Please fill in what problem you are facing, review it, and click submit."
        - Append the action tag with empty title and description: `[ACTION:SHOW_COMPLAINT_FORM:Category||]`
   -> Where Category is one of "Hostel Maintenance", "Mess Food Issue", "Academic Grievance", or "General Campus".
-- At the very end of your response on a new line, append the citation:
-  `🏷️ Source: [Official Document Title]`
+- At the very end of your response on a new line, append the exact document filename citation from the provided Official Institutional Records (e.g. `timetable_MECH_3rdyr_2026.md` or `exam_schedule_CSE_3rdyr_2026.md`):
+  `🏷️ Source: [filename.md]`
 
 Student Profile (Known context about the student; DO NOT recite their profile back to them robotically):
 - Student Name: {user_name} (Address them as {first_name})
@@ -301,9 +304,13 @@ Official Institutional Records:
         
         if match:
             extracted_source = match.group(1).strip().strip("[]*`")
-            # If the extracted source matched a placeholder, clean it
-            if not extracted_source or extracted_source.lower() in ("official document title", "official document used", "none"):
-                extracted_source = fallback_source
+            # If extracted source doesn't end with .md, add it
+            if extracted_source and not extracted_source.endswith(".md"):
+                extracted_source += ".md"
+
+        # Verify extracted source exists on disk; if not, fallback to retrieved source
+        if not extracted_source or not (kb_dir / extracted_source).exists():
+            extracted_source = fallback_source
         
         return {
             "answer": clean_answer,
