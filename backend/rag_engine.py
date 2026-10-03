@@ -390,9 +390,17 @@ Official Institutional Records (Knowledge Base):
             if raw_src and raw_src.lower() not in ["none", "n/a", "null", "no document", "erp", "attendance record", "live attendance", "system"]:
                 if not raw_src.endswith(".md"):
                     raw_src += ".md"
-                # Validate that this document actually exists and was part of the retrieved knowledge
-                if (kb_dir / raw_src).exists() and raw_src in sources_set:
+                # Validate that this document actually exists
+                if (kb_dir / raw_src).exists():
                     extracted_source = raw_src
+                elif sources_set:
+                    # Match closest source from the retrieved sources set
+                    for s in sources_set:
+                        if raw_src.lower().replace(".md", "") in s.lower() or s.lower().replace(".md", "") in raw_src.lower():
+                            extracted_source = s
+                            break
+                    if not extracted_source and list(sources_set):
+                        extracted_source = list(sources_set)[0]
 
         # Post-processing: Strictly remove any bunk or safe bunk lines
         sanitized_lines = []

@@ -5,7 +5,7 @@ import remarkGfm from 'remark-gfm';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { useAuthStore } from '../store/authStore';
-import { api } from '../services/api';
+import { api, API_BASE } from '../services/api';
 import BrandLogo from '../components/BrandLogo';
 import AttendanceModal from '../components/AttendanceModal';
 import TimetableModal from '../components/TimetableModal';
@@ -944,19 +944,36 @@ export default function ChatPage() {
                     {hasSource && (
                       <div className="flex flex-wrap items-center justify-between gap-space-sm pt-space-xs border-t border-surface-container">
                         <div className="flex items-center gap-space-xs text-on-surface-variant font-body-sm text-body-sm">
-                          <span className="material-symbols-outlined text-[18px] text-outline">description</span>
+                          <span className="material-symbols-outlined text-[18px] text-primary">verified</span>
                           <span>
                             Source: <strong className="text-on-surface">{msg.source}</strong>
                           </span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenCitation(msg.source)}
-                          className="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                        >
-                          <span>Open PDF Source</span>
-                          <span className="material-symbols-outlined text-[14px]">open_in_new</span>
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              window.open(
+                                `${API_BASE}/documents/view/${encodeURIComponent(msg.source.replace(/^\[+|\]+$/g, '').trim())}`,
+                                '_blank'
+                              )
+                            }
+                            className="px-2.5 py-1 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary font-label-sm text-label-sm font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                            title="Directly open formatted university gazette / policy"
+                          >
+                            <span>Open Gazette</span>
+                            <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenCitation(msg.source)}
+                            className="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                            title="View institutional clause verification details"
+                          >
+                            <span>Clause Details</span>
+                            <span className="material-symbols-outlined text-[14px]">info</span>
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

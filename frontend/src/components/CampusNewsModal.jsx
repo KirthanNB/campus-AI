@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { API_BASE } from '../services/api';
 
 const NOTICES_DATA = [
   {
@@ -162,7 +163,7 @@ export default function CampusNewsModal({ isOpen, onClose }) {
                   <button
                     type="button"
                     onClick={() =>
-                      window.open(`/api/documents/view/${encodeURIComponent(n.docRef)}`, '_blank')
+                      window.open(`${API_BASE}/documents/view/${encodeURIComponent(n.docRef)}`, '_blank')
                     }
                     className="flex items-center gap-1 text-primary hover:underline font-label-sm text-label-sm font-semibold cursor-pointer shrink-0"
                   >
