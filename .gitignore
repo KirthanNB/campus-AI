@@ -76,5 +76,5 @@ backend/chroma_db/
 *.sublime-workspace
 .DS_Store
 Thumbs.db
-desktop.ini
 *.log
+stitch_campusmind_ai_copilot/
