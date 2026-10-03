@@ -182,22 +182,41 @@ export default function AuthPage() {
         <div className="relative z-10 pt-4 border-t border-slate-800/80">
           <p className="text-xs text-slate-400 mb-2 flex items-center gap-1.5 font-medium">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            Quick Demo Profiles (Instant Hackathon Evaluation):
+            1-Click Demo Logins (Instant Hackathon Evaluation):
           </p>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => handleQuickDemo('cse')}
-              className="text-xs px-3 py-1.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/30 transition-all cursor-pointer"
+              onClick={() => {
+                setIsLogin(true);
+                setLoginData({ email: 'arjun.sharma@campus.edu', password: 'Campus@123' });
+                setError('');
+              }}
+              className="text-xs px-3 py-1.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/30 transition-all cursor-pointer font-medium"
             >
-              Fill: Aarav (CSE 3rd Yr, Hostel B)
+              🔑 1-Click: Arjun (1st Yr CSE)
             </button>
             <button
               type="button"
-              onClick={() => handleQuickDemo('mech')}
-              className="text-xs px-3 py-1.5 rounded-lg bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/30 transition-all cursor-pointer"
+              onClick={() => {
+                setIsLogin(true);
+                setLoginData({ email: 'priya.patel@campus.edu', password: 'Campus@123' });
+                setError('');
+              }}
+              className="text-xs px-3 py-1.5 rounded-lg bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/30 transition-all cursor-pointer font-medium"
             >
-              Fill: Rohan (MECH 2nd Yr, Day Scholar)
+              🔑 1-Click: Priya (2nd Yr ECE)
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsLogin(true);
+                setLoginData({ email: 'rahul.verma@campus.edu', password: 'Campus@123' });
+                setError('');
+              }}
+              className="text-xs px-3 py-1.5 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-200 border border-emerald-500/30 transition-all cursor-pointer font-medium"
+            >
+              🔑 1-Click: Rahul (3rd Yr MECH)
             </button>
           </div>
         </div>
