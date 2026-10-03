@@ -356,9 +356,16 @@ def delete_chat_session(
     """Deletes a specific chat session and its associated messages."""
     session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == current_user.id).first()
     if session:
+        # Explicitly delete any messages under this session
+        db.query(ChatMessage).filter(ChatMessage.session_id == session_id).delete()
         db.delete(session)
         db.commit()
-    delete_chat_session_from_firebase(session_id)
+    
+    try:
+        delete_chat_session_from_firebase(session_id)
+    except Exception as e:
+        print(f"[Chat] Firebase session delete notice: {e}")
+
     return {"message": "Chat session deleted successfully."}
 
 @app.post("/api/chat", response_model=ChatResponse)

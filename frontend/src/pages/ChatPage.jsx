@@ -149,19 +149,26 @@ export default function ChatPage() {
   // Delete chat session
   const handleDeleteSession = async (e, sessionId) => {
     e.stopPropagation();
+    e.preventDefault();
+
+    // Optimistic removal from UI immediately
+    const remaining = sessions.filter((s) => s.id !== sessionId);
+    setSessions(remaining);
+
+    if (activeSessionId === sessionId) {
+      if (remaining.length > 0) {
+        selectSession(remaining[0].id, remaining[0].title);
+      } else {
+        handleNewChat(false);
+      }
+    }
+
     try {
       await api.deleteChatSession(sessionId);
-      const remaining = sessions.filter((s) => s.id !== sessionId);
-      setSessions(remaining);
-      if (activeSessionId === sessionId) {
-        if (remaining.length > 0) {
-          selectSession(remaining[0].id, remaining[0].title);
-        } else {
-          handleNewChat(false);
-        }
-      }
     } catch (err) {
       console.error('Failed to delete session:', err);
+      // Revert/refresh sessions on error
+      loadSessions();
     }
   };
 
@@ -527,7 +534,7 @@ export default function ChatPage() {
                         : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'
                       }`}
                   >
-                    <div className="flex items-center gap-space-xs truncate">
+                    <div className="flex items-center gap-space-xs truncate min-w-0 flex-1">
                       <span className="material-symbols-outlined text-[16px] text-outline shrink-0">
                         chat_bubble
                       </span>
@@ -537,10 +544,10 @@ export default function ChatPage() {
                     <button
                       type="button"
                       onClick={(e) => handleDeleteSession(e, s.id)}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-error transition-opacity cursor-pointer"
-                      title="Delete chat"
+                      className="opacity-60 hover:opacity-100 p-1 rounded-md hover:bg-rose-50 hover:text-error text-on-surface-variant transition-all cursor-pointer shrink-0 z-10"
+                      title="Delete chat session"
                     >
-                      <span className="material-symbols-outlined text-[14px]">delete</span>
+                      <span className="material-symbols-outlined text-[16px]">delete</span>
                     </button>
                   </div>
                 ))
