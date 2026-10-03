@@ -47,6 +47,23 @@ export default function ChatPage() {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
+  // Ensure sidebar is collapsed by default on mobile screens upon signing in or resizing
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setSidebarOpen(false);
+      }
+    };
+
+    // Run on initial mount
+    if (window.innerWidth < 1024) {
+      setSidebarOpen(false);
+    }
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Click outside to close profile card
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -121,6 +138,9 @@ export default function ChatPage() {
   const selectSession = async (sessionId, title) => {
     setActiveSessionId(sessionId);
     setActiveSessionTitle(title || 'Copilot Chat');
+    if (window.innerWidth < 1024) {
+      setSidebarOpen(false);
+    }
     try {
       const msgs = await api.getSessionMessages(sessionId);
       setMessages(msgs || []);
@@ -131,6 +151,9 @@ export default function ChatPage() {
 
   // Create or reset to a new chat
   const handleNewChat = async (createRemote = true) => {
+    if (window.innerWidth < 1024) {
+      setSidebarOpen(false);
+    }
     if (createRemote) {
       try {
         const newSess = await api.createChatSession('New Copilot Chat');
