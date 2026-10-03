@@ -608,33 +608,6 @@ export default function ChatPage() {
               </div>
             </div>
           </div>
-
-          <div className="flex items-center gap-space-xs flex-wrap">
-            <button
-              type="button"
-              onClick={() => setActiveModal('attendance')}
-              className="px-space-sm py-1.5 rounded-xl bg-surface-container-low hover:bg-surface-container text-on-surface flex items-center gap-1.5 font-label-md text-label-md transition-colors border border-surface-container cursor-pointer shadow-2xs"
-            >
-              <span className="material-symbols-outlined text-[17px] text-tertiary-container">fact_check</span>
-              <span>Attendance Hub</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveModal('timetable')}
-              className="px-space-sm py-1.5 rounded-xl bg-surface-container-low hover:bg-surface-container text-on-surface flex items-center gap-1.5 font-label-md text-label-md transition-colors border border-surface-container cursor-pointer shadow-2xs"
-            >
-              <span className="material-symbols-outlined text-[17px] text-primary">calendar_clock</span>
-              <span>Timetable Drawer</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveModal('grievance')}
-              className="px-space-sm py-1.5 rounded-xl bg-surface-container-low hover:bg-surface-container text-on-surface flex items-center gap-1.5 font-label-md text-label-md transition-colors border border-surface-container cursor-pointer shadow-2xs"
-            >
-              <span className="material-symbols-outlined text-[17px] text-secondary">support_agent</span>
-              <span>File Grievance</span>
-            </button>
-          </div>
         </div>
 
         {/* 3. CHAT STREAM CONTENT AREA */}
