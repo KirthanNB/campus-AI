@@ -826,9 +826,13 @@ export default function ChatPage() {
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-secondary text-on-primary flex items-center justify-center shadow-md shrink-0">
                 <span className="material-symbols-outlined text-[20px] animate-spin">sync</span>
               </div>
-              <div className="bg-surface-container-lowest rounded-2xl rounded-tl-xs p-space-md shadow-xs border border-surface-container flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
-                <span className="w-2 h-2 rounded-full bg-primary animate-ping"></span>
-                <span>Querying university vector curriculum &amp; checking course eligibility...</span>
+              <div className="bg-surface-container-lowest rounded-2xl rounded-tl-xs px-space-md py-3 shadow-xs border border-surface-container flex items-center gap-3 text-on-surface-variant font-label-md text-label-md">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]"></span>
+                  <span className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]"></span>
+                  <span className="w-2 h-2 rounded-full bg-primary animate-bounce"></span>
+                </div>
+                <span className="text-on-surface font-medium">CampusMind is thinking...</span>
               </div>
             </div>
           )}
