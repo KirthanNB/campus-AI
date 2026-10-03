@@ -169,6 +169,22 @@ def save_user_to_firebase(user_dict: Dict[str, Any]) -> bool:
         logger.error(f"Error saving user to Firebase: {e}")
         return False
 
+def get_user_by_email_from_firebase(email: str) -> Optional[Dict[str, Any]]:
+    """Fetches user document from Firestore by email."""
+    db = get_firestore_client()
+    if not db:
+        return None
+    try:
+        clean_email = email.lower().strip()
+        docs = db.collection("users").where(filter=FieldFilter("email", "==", clean_email)).limit(1).get()
+        for doc in docs:
+            return doc.to_dict()
+        return None
+    except Exception as e:
+        logger.error(f"Error fetching user by email from Firebase: {e}")
+        return None
+
+
 def save_persona_to_firebase(student_id: str, persona_dict: Dict[str, Any]) -> bool:
     """
     Saves student persona including:

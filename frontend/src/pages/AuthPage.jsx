@@ -49,12 +49,35 @@ export default function AuthPage() {
     phone_number: '',
   });
 
-  const handleLoginSubmit = async (e) => {
-    e.preventDefault();
+  const handleQuickLogin = async (email, password, label = '') => {
+    setIsLogin(true);
+    setLoginData({ email, password });
     setError('');
     setLoading(true);
     try {
-      const res = await api.login(loginData);
+      const res = await api.login({ email, password });
+      setAuth(res.access_token, res.user);
+      navigate('/');
+    } catch (err) {
+      setError(err.message || `Quick login failed for ${label || email}.`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (!loginData.email || !loginData.password) {
+      setError('Please enter both email and password.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await api.login({
+        email: loginData.email.trim(),
+        password: loginData.password.trim(),
+      });
       setAuth(res.access_token, res.user);
       navigate('/');
     } catch (err) {
@@ -67,9 +90,25 @@ export default function AuthPage() {
   const handleSignupSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (!signupData.full_name || !signupData.email || !signupData.password || !signupData.student_id) {
+      setError('Please fill in all required fields marked with *.');
+      return;
+    }
+    if (signupData.password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
     setLoading(true);
     try {
-      const res = await api.register(signupData);
+      const payload = {
+        ...signupData,
+        full_name: signupData.full_name.trim(),
+        email: signupData.email.trim().toLowerCase(),
+        password: signupData.password.trim(),
+        student_id: signupData.student_id.trim().toUpperCase(),
+        phone_number: signupData.phone_number ? signupData.phone_number.trim() : null,
+      };
+      const res = await api.register(payload);
       setAuth(res.access_token, res.user);
       navigate('/');
     } catch (err) {
@@ -78,6 +117,7 @@ export default function AuthPage() {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row bg-slate-50 text-slate-800 selection:bg-indigo-600 selection:text-white font-sans">
@@ -156,34 +196,25 @@ export default function AuthPage() {
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => {
-                setIsLogin(true);
-                setLoginData({ email: 'arjun.sharma@campus.edu', password: 'Campus@123' });
-                setError('');
-              }}
-              className="text-xs px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-all cursor-pointer font-medium"
+              disabled={loading}
+              onClick={() => handleQuickLogin('arjun.sharma@campus.edu', 'Campus@123', 'Arjun')}
+              className="text-xs px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-all cursor-pointer font-medium disabled:opacity-50"
             >
               🔑 1-Click: Arjun (1st Yr CSE)
             </button>
             <button
               type="button"
-              onClick={() => {
-                setIsLogin(true);
-                setLoginData({ email: 'priya.patel@campus.edu', password: 'Campus@123' });
-                setError('');
-              }}
-              className="text-xs px-3 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 transition-all cursor-pointer font-medium"
+              disabled={loading}
+              onClick={() => handleQuickLogin('priya.patel@campus.edu', 'Campus@123', 'Priya')}
+              className="text-xs px-3 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 transition-all cursor-pointer font-medium disabled:opacity-50"
             >
               🔑 1-Click: Priya (2nd Yr ECE)
             </button>
             <button
               type="button"
-              onClick={() => {
-                setIsLogin(true);
-                setLoginData({ email: 'rahul.verma@campus.edu', password: 'Campus@123' });
-                setError('');
-              }}
-              className="text-xs px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-all cursor-pointer font-medium"
+              disabled={loading}
+              onClick={() => handleQuickLogin('rahul.verma@campus.edu', 'Campus@123', 'Rahul')}
+              className="text-xs px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-all cursor-pointer font-medium disabled:opacity-50"
             >
               🔑 1-Click: Rahul (3rd Yr MECH)
             </button>
@@ -236,31 +267,25 @@ export default function AuthPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    setLoginData({ email: 'arjun.sharma@campus.edu', password: 'Campus@123' });
-                    setError('');
-                  }}
-                  className="py-1.5 px-2 rounded-lg bg-white hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-xs font-semibold text-center transition-all cursor-pointer shadow-xs truncate"
+                  disabled={loading}
+                  onClick={() => handleQuickLogin('arjun.sharma@campus.edu', 'Campus@123', 'Arjun')}
+                  className="py-1.5 px-2 rounded-lg bg-white hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-xs font-semibold text-center transition-all cursor-pointer shadow-xs truncate disabled:opacity-50"
                 >
                   ⚡ Arjun (CSE 1st Yr)
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setLoginData({ email: 'priya.patel@campus.edu', password: 'Campus@123' });
-                    setError('');
-                  }}
-                  className="py-1.5 px-2 rounded-lg bg-white hover:bg-purple-100 text-purple-800 border border-purple-200 text-xs font-semibold text-center transition-all cursor-pointer shadow-xs truncate"
+                  disabled={loading}
+                  onClick={() => handleQuickLogin('priya.patel@campus.edu', 'Campus@123', 'Priya')}
+                  className="py-1.5 px-2 rounded-lg bg-white hover:bg-purple-100 text-purple-800 border border-purple-200 text-xs font-semibold text-center transition-all cursor-pointer shadow-xs truncate disabled:opacity-50"
                 >
                   ⚡ Priya (ECE 2nd Yr)
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setLoginData({ email: 'rahul.verma@campus.edu', password: 'Campus@123' });
-                    setError('');
-                  }}
-                  className="py-1.5 px-2 rounded-lg bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold text-center transition-all cursor-pointer shadow-xs truncate"
+                  disabled={loading}
+                  onClick={() => handleQuickLogin('rahul.verma@campus.edu', 'Campus@123', 'Rahul')}
+                  className="py-1.5 px-2 rounded-lg bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold text-center transition-all cursor-pointer shadow-xs truncate disabled:opacity-50"
                 >
                   ⚡ Rahul (MECH 3rd Yr)
                 </button>
