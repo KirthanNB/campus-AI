@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Outfit:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={"darkMode":"class","theme":{"extend":{"colors":{"on-primary":"#ffffff","inverse-primary":"#c3c0ff","surface-tint":"#4d44e3","on-surface-variant":"#464555","surface-bright":"#faf8ff","primary":"#3525cd","on-surface":"#131b2e","on-secondary-fixed-variant":"#5a00c6","secondary-container":"#8a4cfc","outline-variant":"#c7c4d8","error-container":"#ffdad6","on-error":"#ffffff","outline":"#777587","surface-container":"#eaedff","surface-container-high":"#e2e7ff","on-primary-fixed-variant":"#3323cc","tertiary":"#005338","surface-container-lowest":"#ffffff","tertiary-fixed":"#6ffbbe","tertiary-fixed-dim":"#4edea3","tertiary-container":"#006e4b","on-error-container":"#93000a","on-tertiary-container":"#67f4b7","secondary":"#712ae2","primary-fixed":"#e2dfff","on-tertiary":"#ffffff","primary-container":"#4f46e5","surface-container-highest":"#dae2fd","inverse-on-surface":"#eef0ff","surface-dim":"#d2d9f4","on-primary-fixed":"#0f0069","surface-variant":"#dae2fd","background":"#faf8ff","on-primary-container":"#dad7ff","on-tertiary-fixed":"#002113","surface-container-low":"#f2f3ff","on-secondary-container":"#fffbff","on-secondary-fixed":"#25005a","on-background":"#131b2e","secondary-fixed":"#eaddff","on-tertiary-fixed-variant":"#005236","inverse-surface":"#283044","error":"#ba1a1a","secondary-fixed-dim":"#d2bbff","on-secondary":"#ffffff","primary-fixed-dim":"#c3c0ff","surface":"#faf8ff"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"gutter-lg":"2rem","margin":"1rem","margin-lg":"3rem","gutter":"1rem","space-xs":"0.25rem","gutter-md":"1.5rem","space-sm":"0.5rem","space-lg":"1.5rem","margin-md":"2rem","space-xl":"2.5rem","space-md":"1rem"},"fontFamily":{"headline-xl":["Outfit"],"body-md":["Inter"],"body-sm":["Inter"],"headline-xl-mobile":["Outfit"],"body-lg":["Inter"],"headline-sm":["Outfit"],"headline-lg":["Outfit"],"display-lg":["Outfit"],"label-md":["Inter"],"headline-md":["Outfit"],"code-sm":["Inter"],"label-sm":["Inter"]},"fontSize":{"headline-xl":["32px",{"lineHeight":"40px","letterSpacing":"-0.02em","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"22px","letterSpacing":"0em","fontWeight":"400"}],"body-sm":["12px",{"lineHeight":"18px","letterSpacing":"0.005em","fontWeight":"400"}],"headline-xl-mobile":["26px",{"lineHeight":"34px","letterSpacing":"-0.015em","fontWeight":"600"}],"body-lg":["16px",{"lineHeight":"26px","letterSpacing":"-0.01em","fontWeight":"400"}],"headline-sm":["16px",{"lineHeight":"24px","letterSpacing":"0em","fontWeight":"500"}],"headline-lg":["24px",{"lineHeight":"32px","letterSpacing":"-0.015em","fontWeight":"600"}],"display-lg":["40px",{"lineHeight":"48px","letterSpacing":"-0.025em","fontWeight":"600"}],"label-md":["13px",{"lineHeight":"18px","letterSpacing":"0.01em","fontWeight":"500"}],"headline-md":["20px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"500"}],"code-sm":["12px",{"lineHeight":"16px","letterSpacing":"-0.01em","fontWeight":"500"}],"label-sm":["11px",{"lineHeight":"16px","letterSpacing":"0.04em","fontWeight":"600"}]}}}}</script></head><body class="bg-background font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-screen w-72 bg-surface-container-lowest z-50 flex flex-col justify-between overflow-y-auto shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col"><div class="p-space-md flex items-center justify-between"><div class="flex items-center gap-space-sm"><img alt="CampusMind AI Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1UVT_ut1yxUnp-32YtwLk05sjGxSLzb8r0nGseIoMbypMQwE60EHB3CHEAn0FYi1k8j4TH-A2bXPtqApM6WERBVmVbRigENJ8J2wfg3rGtHAKohuvb3OQV_qU6v1334VNdCjUTqUlg5ZIfwS_rSwAfaTWhkK5QDDvXg7pGXk35Ic-eZ6Ua6SLtnrFLeds9HsoW4pYjZXFqs-YESyatYMJeLVc7wbOW9PAp0mpI-BLsAty5gdRLIVNf4mUw"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface leading-none">CampusMind</span><span class="font-label-sm text-label-sm text-primary leading-tight tracking-wider uppercase">Copilot v2.4</span></div></div><button class="flex items-center justify-center w-7 h-7 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[18px]">dock_to_left</span></button></div><div class="px-space-md mb-space-sm"><div class="p-space-sm rounded-xl bg-surface-container-low flex items-center gap-space-sm"><div class="w-9 h-9 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-md text-label-md font-semibold">AS</div><div class="flex flex-col min-w-0 flex-1"><span class="font-label-md text-label-md text-on-surface truncate">Arjun Sharma</span><span class="font-label-sm text-label-sm text-on-surface-variant truncate">24CSE101 • CSE 1st Year</span></div></div></div><div class="px-space-md mb-space-md"><button class="w-full flex items-center justify-between px-space-md py-space-sm rounded-xl bg-primary-container text-on-primary hover:bg-primary transition-all shadow-[0_1px_2px_rgba(79,70,229,0.2)]"><span class="flex items-center gap-space-xs font-label-md text-label-md font-semibold"><span class="material-symbols-outlined text-[18px]">add</span>New Copilot Chat</span><span class="font-code-sm text-code-sm px-1.5 py-0.5 rounded bg-surface-container-lowest/20 text-on-primary">⌘K</span></button></div><div class="px-space-md mb-space-xs"><span class="font-label-sm text-label-sm uppercase tracking-wider text-outline">Academic Space</span></div><nav class="px-space-sm space-y-space-xs flex flex-col" data-active-classes="bg-surface-container text-primary font-semibold"><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="copilot-workspace" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">neurology</span><span class="font-label-md text-label-md">Active Copilot</span></div></a><a aria-current="page" class="flex items-center justify-between px-space-sm py-2 rounded-lg transition-colors bg-surface-container text-primary font-semibold" data-path="course-attendance" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">fact_check</span><span class="font-label-md text-label-md">Course Attendance</span></div><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container-high text-tertiary-container font-label-sm text-label-sm"><span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>83.2%</span></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="timetable-and-schedule" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">calendar_today</span><span class="font-label-md text-label-md">Timetable &amp; Schedule</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="student-grievances" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">support_agent</span><span class="font-label-md text-label-md">Student Grievances</span></div><span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm">1 Open</span></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="campus-circulars" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">campaign</span><span class="font-label-md text-label-md">Campus Circulars</span></div><span class="w-2 h-2 rounded-full bg-secondary"></span></a></nav><div class="px-space-md mt-space-md mb-space-xs"><span class="font-label-sm text-label-sm uppercase tracking-wider text-outline">Recent Inquiries</span></div><div class="px-space-sm space-y-space-xs flex flex-col"><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors truncate" data-path="chat-linear-algebra-notes" href="#"><span class="material-symbols-outlined text-[16px] text-outline">chat_bubble</span><span class="font-label-md text-label-md truncate">Linear Algebra Eigenvalues</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors truncate" data-path="chat-hostel-mess-refund" href="#"><span class="material-symbols-outlined text-[16px] text-outline">chat_bubble</span><span class="font-label-md text-label-md truncate">Hostel Mess Fee Refund Procedure</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors truncate" data-path="chat-data-structures-prep" href="#"><span class="material-symbols-outlined text-[16px] text-outline">chat_bubble</span><span class="font-label-md text-label-md truncate">Mid-term DSA Quiz Mock</span></a></div></div><div class="p-space-md mt-space-md bg-surface-container-lowest"><div class="flex items-center justify-between mb-space-sm px-space-xs"><div class="flex items-center gap-space-xs text-on-surface-variant"><span class="material-symbols-outlined text-[16px]">translate</span><span class="font-label-sm text-label-sm font-medium">Language</span></div><select class="bg-surface-container-low text-on-surface font-label-sm text-label-sm rounded px-2 py-1 outline-none border-none cursor-pointer"><option selected="">English</option><option>Hindi</option><option>Tamil</option></select></div><button class="w-full flex items-center justify-center gap-space-xs py-space-sm rounded-lg text-error hover:bg-error-container/30 transition-colors"><span class="material-symbols-outlined text-[18px]">logout</span><span class="font-label-md text-label-md font-semibold">Sign Out</span></button></div></aside><div class="pl-72 flex flex-col min-h-screen"><header class="fixed top-0 left-72 right-0 h-16 bg-surface-container-lowest/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40"><div class="w-full h-16 px-space-md flex items-center justify-between"><div class="flex items-center gap-space-sm"><img alt="CampusMind AI Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1UVT_ut1yxUnp-32YtwLk05sjGxSLzb8r0nGseIoMbypMQwE60EHB3CHEAn0FYi1k8j4TH-A2bXPtqApM6WERBVmVbRigENJ8J2wfg3rGtHAKohuvb3OQV_qU6v1334VNdCjUTqUlg5ZIfwS_rSwAfaTWhkK5QDDvXg7pGXk35Ic-eZ6Ua6SLtnrFLeds9HsoW4pYjZXFqs-YESyatYMJeLVc7wbOW9PAp0mpI-BLsAty5gdRLIVNf4mUw"/><span class="font-headline-sm text-headline-sm text-on-surface">CampusMind AI</span><div class="h-4 w-px bg-outline-variant mx-space-xs"></div><div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container text-primary font-label-sm text-label-sm"><span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>Neural Link Active</div></div><div class="flex items-center gap-space-md"><div class="hidden sm:flex items-center gap-space-xs px-space-sm py-1.5 rounded-lg bg-surface-container-low text-on-surface-variant font-label-md text-label-md"><span class="material-symbols-outlined text-[16px]">school</span><span>B.Tech CSE • Term II</span></div><button class="flex items-center justify-center w-8 h-8 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-16 bg-background flex-1"><div class="flex flex-col w-full">
+<div class="p-margin-md lg:p-margin-lg space-y-gutter-lg max-w-7xl mx-auto w-full">
+<!-- Top Identity & Institutional Status Bar -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md p-space-lg rounded-xl bg-surface-container-lowest shadow-sm">
+<div class="flex items-center gap-space-md">
+<div class="relative">
+<div class="w-14 h-14 rounded-xl bg-primary-container text-on-primary flex items-center justify-center font-headline-md text-headline-md font-semibold shadow-md">
+            AS
+          </div>
+<span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-tertiary-fixed-dim flex items-center justify-center">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-md text-headline-md text-on-surface font-semibold">Arjun Sharma</span>
+<span class="font-code-sm text-code-sm px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-medium">24CSE101</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">B.Tech Computer Science &amp; Engineering • Section B • Semester 1</span>
+</div>
+</div>
+<div class="flex flex-wrap items-center gap-space-sm">
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#ECFDF5] text-[#065F46] font-label-md text-label-md shadow-sm">
+<span class="w-2 h-2 rounded-full bg-[#10B981] animate-pulse"></span>
+<span class="font-semibold">83.2% Safe</span>
+<span class="text-outline text-[12px]">•</span>
+<span>Eligible for End-Sem Exams (&gt;75%)</span>
+</div>
+<button class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-surface-container-high text-primary hover:bg-surface-container text-label-md font-semibold transition-all" id="open-bunk-calc-btn">
+<span class="material-symbols-outlined text-[18px]">calculate</span>
+<span>Open Simulator</span>
+</button>
+</div>
+</div>
+<!-- KPI Metric Cards Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- KPI 1: Overall Percentage & Progress Ring -->
+<div class="relative overflow-hidden p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-outline">Overall Aggregate</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-display-lg text-display-lg font-bold text-on-surface">83.2</span>
+<span class="font-headline-md text-headline-md text-primary font-bold">%</span>
+</div>
+</div>
+<div class="relative w-14 h-14 flex items-center justify-center">
+<svg class="w-14 h-14 -rotate-90" viewbox="0 0 48 48">
+<circle class="stroke-surface-container-high" cx="24" cy="24" fill="none" r="20" stroke-width="4"></circle>
+<circle class="stroke-tertiary-container" cx="24" cy="24" fill="none" r="20" stroke-dasharray="125.6" stroke-dashoffset="21.1" stroke-linecap="round" stroke-width="4"></circle>
+</svg>
+<span class="material-symbols-outlined text-tertiary-container absolute text-[20px]">verified</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs flex items-center justify-between font-body-sm text-body-sm text-on-surface-variant">
+<span>Attended: <strong class="text-on-surface font-semibold">114</strong> / 137 Hrs</span>
+<span class="text-tertiary font-medium">+8.2% Buffer</span>
+</div>
+</div>
+<!-- KPI 2: Total Classes Conducted -->
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-outline">Total Conducted</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-display-lg text-display-lg font-bold text-on-surface">137</span>
+<span class="font-label-md text-label-md text-on-surface-variant font-medium">Hours</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[22px]">calendar_view_week</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span>Across 5 Academic Courses (Term 1)</span>
+</div>
+</div>
+<!-- KPI 3: Absences Recorded -->
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-outline">Absences Recorded</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-display-lg text-display-lg font-bold text-error">23</span>
+<span class="font-label-md text-label-md text-on-surface-variant font-medium">Hours</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-error-container/40 flex items-center justify-center text-error">
+<span class="material-symbols-outlined text-[22px]">person_off</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs flex items-center justify-between font-body-sm text-body-sm">
+<span class="text-on-surface-variant">Medical Waiver: <strong class="text-on-surface">4 Hrs</strong></span>
+<span class="px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm text-primary">Processed</span>
+</div>
+</div>
+<!-- KPI 4: Safe Bunk Margin Overall -->
+<div class="relative overflow-hidden p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-outline">Total Safe Margin</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-display-lg text-display-lg font-bold text-secondary">5</span>
+<span class="font-label-md text-label-md text-secondary font-medium">Classes Max</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[22px]">flight_takeoff</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs font-body-sm text-body-sm text-on-surface-variant">
+<span>Without dropping aggregate below threshold (75%).</span>
+</div>
+</div>
+</div>
+<!-- Subject-Wise Attendance Detail Roster -->
+<div class="flex flex-col gap-space-md">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm px-space-xs">
+<div>
+<span class="font-headline-lg text-headline-lg text-on-surface">Course Attendance Roster</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Course-wise attendance metrics and real-time safe absenteeism quotas</p>
+</div>
+<div class="flex items-center gap-space-sm text-label-sm font-label-sm">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary-container"></span>
+<span class="text-on-surface-variant">Safe (&gt;80%)</span>
+</div>
+<div class="flex items-center gap-1.5 ml-2">
+<span class="w-2.5 h-2.5 rounded-full bg-[#f59e0b]"></span>
+<span class="text-on-surface-variant">Borderline (75–80%)</span>
+</div>
+<div class="flex items-center gap-1.5 ml-2">
+<span class="w-2.5 h-2.5 rounded-full bg-error"></span>
+<span class="text-on-surface-variant">Critical (&lt;75%)</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Course 1: CS101 -->
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+<div class="space-y-space-sm">
+<div class="flex items-start justify-between gap-2">
+<span class="px-2 py-0.5 rounded bg-surface-container font-code-sm text-code-sm text-primary font-bold">CS101</span>
+<span class="font-headline-md text-headline-md font-bold text-tertiary-container">86.6%</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold leading-snug">Problem Solving &amp; Python Programming</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">26 of 30 Classes Attended</p>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-2 rounded-full bg-surface-container-high overflow-hidden">
+<div class="h-full bg-tertiary-container rounded-full" style="width: 86.6%"></div>
+</div>
+<!-- Safe Margin Pill -->
+<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#ECFDF5] text-[#065F46] font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-[#10B981]">check_circle</span>
+<span class="font-semibold">Can safely miss 3 classes</span>
+</div>
+</div>
+<div class="mt-space-lg pt-space-sm flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm bg-surface-container-low p-space-sm rounded-lg">
+<div class="flex items-center gap-1.5 truncate">
+<span class="material-symbols-outlined text-[16px] text-outline">person</span>
+<span class="truncate">Dr. Ramesh V.</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-outline">room</span>
+<span class="whitespace-nowrap">Lab 3, Turing</span>
+</div>
+</div>
+</div>
+<!-- Course 2: PHY101 -->
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+<div class="space-y-space-sm">
+<div class="flex items-start justify-between gap-2">
+<span class="px-2 py-0.5 rounded bg-surface-container font-code-sm text-code-sm text-primary font-bold">PHY101</span>
+<span class="font-headline-md text-headline-md font-bold text-tertiary-container">82.8%</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold leading-snug">Engineering Physics</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">24 of 29 Classes Attended</p>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-2 rounded-full bg-surface-container-high overflow-hidden">
+<div class="h-full bg-tertiary-container rounded-full" style="width: 82.8%"></div>
+</div>
+<!-- Safe Margin Pill -->
+<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#ECFDF5] text-[#065F46] font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-[#10B981]">check_circle</span>
+<span class="font-semibold">Can safely miss 2 classes</span>
+</div>
+</div>
+<div class="mt-space-lg pt-space-sm flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm bg-surface-container-low p-space-sm rounded-lg">
+<div class="flex items-center gap-1.5 truncate">
+<span class="material-symbols-outlined text-[16px] text-outline">person</span>
+<span class="truncate">Prof. Ananya Roy</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-outline">room</span>
+<span class="whitespace-nowrap">Room 204, Raman</span>
+</div>
+</div>
+</div>
+<!-- Course 3: MAT101 (Borderline) -->
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+<div class="space-y-space-sm">
+<div class="flex items-start justify-between gap-2">
+<span class="px-2 py-0.5 rounded bg-surface-container font-code-sm text-code-sm text-primary font-bold">MAT101</span>
+<span class="font-headline-md text-headline-md font-bold text-[#b45309]">75.0%</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold leading-snug">Linear Algebra &amp; Calculus</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">27 of 36 Classes Attended</p>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-2 rounded-full bg-surface-container-high overflow-hidden">
+<div class="h-full bg-[#f59e0b] rounded-full" style="width: 75%"></div>
+</div>
+<!-- Safe Margin Pill (Warning) -->
+<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FFFBEB] text-[#92400E] font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-[#f59e0b]">warning</span>
+<span class="font-semibold leading-tight">Borderline • Cannot miss any class (falls to 72.9%)</span>
+</div>
+</div>
+<div class="mt-space-lg pt-space-sm flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm bg-surface-container-low p-space-sm rounded-lg">
+<div class="flex items-center gap-1.5 truncate">
+<span class="material-symbols-outlined text-[16px] text-outline">person</span>
+<span class="truncate">Dr. S. K. Gupta</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-outline">room</span>
+<span class="whitespace-nowrap">Room 108, Raman</span>
+</div>
+</div>
+</div>
+<!-- Course 4: ENG102 -->
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+<div class="space-y-space-sm">
+<div class="flex items-start justify-between gap-2">
+<span class="px-2 py-0.5 rounded bg-surface-container font-code-sm text-code-sm text-primary font-bold">ENG102</span>
+<span class="font-headline-md text-headline-md font-bold text-tertiary-container">95.4%</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold leading-snug">Professional Communication &amp; Ethics</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">21 of 22 Classes Attended</p>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-2 rounded-full bg-surface-container-high overflow-hidden">
+<div class="h-full bg-tertiary-container rounded-full" style="width: 95.4%"></div>
+</div>
+<!-- Safe Margin Pill -->
+<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#ECFDF5] text-[#065F46] font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-[#10B981]">check_circle</span>
+<span class="font-semibold">Can safely miss 4 classes</span>
+</div>
+</div>
+<div class="mt-space-lg pt-space-sm flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm bg-surface-container-low p-space-sm rounded-lg">
+<div class="flex items-center gap-1.5 truncate">
+<span class="material-symbols-outlined text-[16px] text-outline">person</span>
+<span class="truncate">Dr. Priya Nair</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-outline">room</span>
+<span class="whitespace-nowrap">Seminar Hall A</span>
+</div>
+</div>
+</div>
+<!-- Course 5: BEE101 -->
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+<div class="space-y-space-sm">
+<div class="flex items-start justify-between gap-2">
+<span class="px-2 py-0.5 rounded bg-surface-container font-code-sm text-code-sm text-primary font-bold">BEE101</span>
+<span class="font-headline-md text-headline-md font-bold text-tertiary-container">80.0%</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold leading-snug">Basic Electrical &amp; Electronics Engineering</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">16 of 20 Classes Attended</p>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-2 rounded-full bg-surface-container-high overflow-hidden">
+<div class="h-full bg-tertiary-container rounded-full" style="width: 80%"></div>
+</div>
+<!-- Safe Margin Pill -->
+<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#ECFDF5] text-[#065F46] font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-[#10B981]">check_circle</span>
+<span class="font-semibold">Can safely miss 1 class</span>
+</div>
+</div>
+<div class="mt-space-lg pt-space-sm flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm bg-surface-container-low p-space-sm rounded-lg">
+<div class="flex items-center gap-1.5 truncate">
+<span class="material-symbols-outlined text-[16px] text-outline">person</span>
+<span class="truncate">Prof. K. Venkatesh</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-outline">room</span>
+<span class="whitespace-nowrap">Lab 1, Edison</span>
+</div>
+</div>
+</div>
+<!-- Academic Policy Advisory Card -->
+<div class="p-space-lg rounded-xl bg-gradient-to-br from-surface-container-lowest via-surface-container-low to-surface-container shadow-sm flex flex-col justify-between">
+<div class="space-y-space-sm">
+<div class="flex items-center gap-2 text-primary font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+<span>Dean's Academic Regulations</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Attendance Criteria Notice</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+              A minimum aggregate of <strong>75.0%</strong> per registered course is mandatory to download the End-Semester Hall Ticket. Medical condonation covers up to a maximum 10% deficit with approved hospital certificates.
+            </p>
+</div>
+<div class="mt-space-md pt-space-xs flex items-center justify-between">
+<span class="font-code-sm text-code-sm text-outline">Ref: CM-REG-2024</span>
+<button class="font-label-md text-label-md text-primary font-semibold hover:underline flex items-center gap-1">
+<span>View Handbook</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- What-If Bunk Calculator Interactive Section -->
+<div class="p-space-lg lg:p-space-xl rounded-xl bg-surface-container-lowest shadow-sm space-y-space-lg">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm">
+<div>
+<div class="flex items-center gap-space-xs text-primary font-label-sm text-label-sm font-semibold uppercase tracking-wider">
+<span class="material-symbols-outlined text-[16px]">psychology</span>
+<span>Predictive Simulation</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface font-semibold mt-0.5">What-if Bunk Calculator</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Simulate your hypothetical absences or extra attendances to ensure exam eligibility.</p>
+</div>
+<div class="flex items-center gap-space-xs bg-surface-container p-1 rounded-lg">
+<button class="px-3 py-1.5 rounded text-label-md font-semibold bg-surface-container-lowest text-primary shadow-xs transition-all" id="mode-bunk">Simulate Bunking</button>
+<button class="px-3 py-1.5 rounded text-label-md font-semibold text-on-surface-variant hover:text-on-surface transition-all" id="mode-attend">Simulate Attending</button>
+</div>
+</div>
+<!-- Simulator Controls Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-center bg-surface-container-low p-space-lg rounded-xl">
+<div class="lg:col-span-5 space-y-space-md">
+<div>
+<label class="font-label-sm text-label-sm text-outline uppercase tracking-wider block mb-1">Target Academic Course</label>
+<select class="w-full h-10 px-3 rounded-lg bg-surface-container-lowest text-on-surface font-body-md text-body-md shadow-xs outline-none" id="sim-course">
+<option data-attended="26" data-total="30" value="cs101">CS101: Problem Solving &amp; Python (Current: 86.6%)</option>
+<option data-attended="24" data-total="29" value="phy101">PHY101: Engineering Physics (Current: 82.8%)</option>
+<option data-attended="27" data-total="36" selected="" value="mat101">MAT101: Linear Algebra &amp; Calculus (Current: 75.0%)</option>
+<option data-attended="21" data-total="22" value="eng102">ENG102: Professional Communication (Current: 95.4%)</option>
+<option data-attended="16" data-total="20" value="bee101">BEE101: Basic Electrical &amp; Electronics (Current: 80.0%)</option>
+</select>
+</div>
+<div class="space-y-space-xs">
+<div class="flex justify-between items-center">
+<label class="font-label-sm text-label-sm text-outline uppercase tracking-wider" id="sim-slider-label">Classes to Miss</label>
+<span class="font-headline-sm text-headline-sm font-bold text-primary" id="sim-classes-count">2 Classes</span>
+</div>
+<input class="w-full h-2 bg-surface-container-high rounded-lg appearance-none cursor-pointer accent-primary" id="sim-slider" max="5" min="1" type="range" value="2"/>
+<div class="flex justify-between text-label-sm text-outline">
+<span>1 Class</span>
+<span>2</span>
+<span>3</span>
+<span>4</span>
+<span>5 Classes</span>
+</div>
+</div>
+</div>
+<div class="lg:col-span-7 flex flex-col md:flex-row items-center justify-between gap-space-lg bg-surface-container-lowest p-space-lg rounded-xl shadow-xs">
+<div class="space-y-space-xs text-center md:text-left">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Simulated Outcome</span>
+<div class="flex items-baseline justify-center md:justify-start gap-1">
+<span class="font-display-lg text-display-lg font-bold text-[#b45309]" id="sim-projected-pct">71.1</span>
+<span class="font-headline-md text-headline-md font-bold text-[#b45309]">%</span>
+<span class="ml-2 font-code-sm text-code-sm px-2 py-0.5 rounded-full bg-error-container/50 text-error font-semibold" id="sim-diff-tag">-3.9%</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant" id="sim-status-desc">
+              Missed total: 27 / 38 classes. You will fall below the 75% threshold!
+            </p>
+</div>
+<div class="flex flex-col items-center gap-space-xs min-w-[180px]">
+<div class="px-4 py-2 rounded-xl bg-error-container/40 text-error flex items-center gap-2 font-label-md text-label-md font-bold" id="sim-badge">
+<span class="material-symbols-outlined text-[20px]">cancel</span>
+<span id="sim-badge-text">De-barred Risk</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline text-center" id="sim-sub-text">Minimum 75% required</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    let mode = 'bunk'; // 'bunk' or 'attend'
+    const courses = {
+      cs101: { name: 'CS101: Python Programming', attended: 26, total: 30 },
+      phy101: { name: 'PHY101: Engineering Physics', attended: 24, total: 29 },
+      mat101: { name: 'MAT101: Linear Algebra', attended: 27, total: 36 },
+      eng102: { name: 'ENG102: Professional Comm', attended: 21, total: 22 },
+      bee101: { name: 'BEE101: Basic Electrical', attended: 16, total: 20 }
+    };
+
+    const courseSelect = document.getElementById('sim-course');
+    const slider = document.getElementById('sim-slider');
+    const countDisplay = document.getElementById('sim-classes-count');
+    const pctDisplay = document.getElementById('sim-projected-pct');
+    const diffTag = document.getElementById('sim-diff-tag');
+    const statusDesc = document.getElementById('sim-status-desc');
+    const simBadge = document.getElementById('sim-badge');
+    const simBadgeText = document.getElementById('sim-badge-text');
+    const sliderLabel = document.getElementById('sim-slider-label');
+    const modeBunkBtn = document.getElementById('mode-bunk');
+    const modeAttendBtn = document.getElementById('mode-attend');
+
+    function calculate() {
+      const selectedKey = courseSelect.value;
+      const course = courses[selectedKey];
+      const count = parseInt(slider.value, 10);
+      countDisplay.textContent = count + (count === 1 ? ' Class' : ' Classes');
+
+      let newAttended = course.attended;
+      let newTotal = course.total + count;
+
+      if (mode === 'attend') {
+        newAttended += count;
+      }
+
+      const initialPct = (course.attended / course.total) * 100;
+      const projectedPct = (newAttended / newTotal) * 100;
+      const diff = projectedPct - initialPct;
+
+      pctDisplay.textContent = projectedPct.toFixed(1);
+
+      if (diff >= 0) {
+        diffTag.textContent = '+' + diff.toFixed(1) + '%';
+        diffTag.className = 'ml-2 font-code-sm text-code-sm px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#065F46] font-semibold';
+      } else {
+        diffTag.textContent = diff.toFixed(1) + '%';
+        diffTag.className = 'ml-2 font-code-sm text-code-sm px-2 py-0.5 rounded-full bg-error-container/50 text-error font-semibold';
+      }
+
+      if (projectedPct >= 80) {
+        pctDisplay.className = 'font-display-lg text-display-lg font-bold text-tertiary-container';
+        simBadge.className = 'px-4 py-2 rounded-xl bg-[#ECFDF5] text-[#065F46] flex items-center gap-2 font-label-md text-label-md font-bold';
+        simBadge.innerHTML = '<span class="material-symbols-outlined text-[20px]">check_circle</span><span>Safely Eligible</span>';
+        statusDesc.textContent = `Projected: ${newAttended} / ${newTotal} classes. You remain securely above requirements!`;
+      } else if (projectedPct >= 75) {
+        pctDisplay.className = 'font-display-lg text-display-lg font-bold text-[#b45309]';
+        simBadge.className = 'px-4 py-2 rounded-xl bg-[#FFFBEB] text-[#92400E] flex items-center gap-2 font-label-md text-label-md font-bold';
+        simBadge.innerHTML = '<span class="material-symbols-outlined text-[20px]">warning</span><span>Borderline Zone</span>';
+        statusDesc.textContent = `Projected: ${newAttended} / ${newTotal} classes. Right on the 75% margin. Caution advised.`;
+      } else {
+        pctDisplay.className = 'font-display-lg text-display-lg font-bold text-error';
+        simBadge.className = 'px-4 py-2 rounded-xl bg-error-container/50 text-error flex items-center gap-2 font-label-md text-label-md font-bold';
+        simBadge.innerHTML = '<span class="material-symbols-outlined text-[20px]">cancel</span><span>De-barred Risk</span>';
+        statusDesc.textContent = `Projected: ${newAttended} / ${newTotal} classes. This drops you below the 75% requirement!`;
+      }
+    }
+
+    modeBunkBtn.addEventListener('click', function() {
+      mode = 'bunk';
+      modeBunkBtn.className = 'px-3 py-1.5 rounded text-label-md font-semibold bg-surface-container-lowest text-primary shadow-xs transition-all';
+      modeAttendBtn.className = 'px-3 py-1.5 rounded text-label-md font-semibold text-on-surface-variant hover:text-on-surface transition-all';
+      sliderLabel.textContent = 'Classes to Miss';
+      calculate();
+    });
+
+    modeAttendBtn.addEventListener('click', function() {
+      mode = 'attend';
+      modeAttendBtn.className = 'px-3 py-1.5 rounded text-label-md font-semibold bg-surface-container-lowest text-primary shadow-xs transition-all';
+      modeBunkBtn.className = 'px-3 py-1.5 rounded text-label-md font-semibold text-on-surface-variant hover:text-on-surface transition-all';
+      sliderLabel.textContent = 'Extra Classes to Attend';
+      calculate();
+    });
+
+    courseSelect.addEventListener('change', calculate);
+    slider.addEventListener('input', calculate);
+
+    const openBtn = document.getElementById('open-bunk-calc-btn');
+    if (openBtn) {
+      openBtn.addEventListener('click', function() {
+        const simEl = document.querySelector('.p-space-lg.lg\\:p-space-xl');
+        if (simEl) {
+          simEl.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    }
+
+    calculate();
+  })();
+</script></main></div></body></html>

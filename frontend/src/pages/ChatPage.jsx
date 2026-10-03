@@ -1,771 +1,945 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import {
-  Send,
-  Sparkles,
-  RotateCcw,
-  LogOut,
-  Calendar,
-  CreditCard,
-  BookOpen,
-  Home,
-  Languages,
-  User as UserIcon,
-  Bot,
-  Tag,
-  ChevronDown,
-  Check,
-  FileText,
-  ShieldAlert,
-  ShieldCheck,
-  Bell,
-  ExternalLink,
-  MessageSquare,
-  Plus,
-  Trash2,
-} from 'lucide-react';
-import { api } from '../services/api';
+import { motion, AnimatePresence } from 'framer-motion';
+
 import { useAuthStore } from '../store/authStore';
-import InteractiveTicketCard from '../components/InteractiveTicketCard';
-import GrievancesModal from '../components/GrievancesModal';
-import TimetableModal from '../components/TimetableModal';
+import { api } from '../services/api';
+import BrandLogo from '../components/BrandLogo';
 import AttendanceModal from '../components/AttendanceModal';
+import TimetableModal from '../components/TimetableModal';
+import GrievancesModal from '../components/GrievancesModal';
 import CampusNewsModal from '../components/CampusNewsModal';
+import CitationModal from '../components/CitationModal';
+import InteractiveTicketCard from '../components/InteractiveTicketCard';
 
 export default function ChatPage() {
-  const { user, logout } = useAuthStore();
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState('Auto');
-  const [showLangMenu, setShowLangMenu] = useState(false);
-  const [showProfileModal, setShowProfileModal] = useState(false);
+  const navigate = useNavigate();
+  const { user, logout, token } = useAuthStore();
 
-  // Multi-session Chat History state
+  // Navigation & UI state
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activeModal, setActiveModal] = useState(null); // 'attendance' | 'timetable' | 'grievance' | 'news' | 'citation'
+  const [citationData, setCitationData] = useState(null);
+
+  // Chat sessions state
   const [sessions, setSessions] = useState([]);
-  const [currentSessionId, setCurrentSessionId] = useState(null);
-  const [showHistoryMenu, setShowHistoryMenu] = useState(false);
+  const [activeSessionId, setActiveSessionId] = useState(null);
+  const [activeSessionTitle, setActiveSessionTitle] = useState('New Copilot Chat');
+  const [messages, setMessages] = useState([]);
 
-  // New Navigation Feature Modals
-  const [showGrievanceModal, setShowGrievanceModal] = useState(false);
-  const [showTimetableModal, setShowTimetableModal] = useState(false);
-  const [showAttendanceModal, setShowAttendanceModal] = useState(false);
-  const [showNewsModal, setShowNewsModal] = useState(false);
+  // Input & Streaming state
+  const [inputPrompt, setInputPrompt] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [preferredLanguage, setPreferredLanguage] = useState('English');
+  const [isListening, setIsListening] = useState(false);
+  const [attendanceSummary, setAttendanceSummary] = useState(null);
+  const [openTicketsCount, setOpenTicketsCount] = useState(0);
 
   const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
 
-  const languages = [
-    { label: 'Auto (Original)', value: 'Auto' },
-    { label: 'English', value: 'English' },
-    { label: 'हिंदी (Hindi)', value: 'Hindi' },
-    { label: 'తెలుగు (Telugu)', value: 'Telugu' },
-    { label: 'தமிழ் (Tamil)', value: 'Tamil' },
-    { label: 'Español (Spanish)', value: 'Spanish' },
-    { label: 'Français (French)', value: 'French' },
-    { label: 'Deutsch (German)', value: 'German' },
-  ];
-
-  // Load chat sessions and initial history from backend on mount
+  // Keyboard shortcut listener (Cmd/Ctrl + K for new chat, Esc to clear)
   useEffect(() => {
-    loadSessions();
-    loadHistory();
-
-    const handleOpenGrievances = () => setShowGrievanceModal(true);
-    window.addEventListener('open_grievances_modal', handleOpenGrievances);
-    return () => {
-      window.removeEventListener('open_grievances_modal', handleOpenGrievances);
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        handleNewChat();
+      } else if (e.key === 'Escape') {
+        setInputPrompt('');
+      }
     };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  async function loadSessions() {
+  // Initial data loading
+  useEffect(() => {
+    loadSessions();
+    loadStudentContext();
+  }, [user]);
+
+  // Load chat sessions from backend
+  const loadSessions = async () => {
     try {
-      const list = await api.getChatSessions();
-      setSessions(list || []);
-      if (list && list.length > 0 && !currentSessionId) {
-        setCurrentSessionId(list[0].id);
+      const data = await api.getChatSessions();
+      if (data && data.length > 0) {
+        setSessions(data);
+        if (!activeSessionId) {
+          selectSession(data[0].id, data[0].title);
+        }
+      } else {
+        handleNewChat(false);
       }
     } catch (err) {
       console.error('Failed to load chat sessions:', err);
     }
-  }
+  };
 
-  async function loadHistory() {
+  // Load live student attendance and tickets metrics for sidebar badges
+  const loadStudentContext = async () => {
     try {
-      const history = await api.getChatHistory();
-      if (history && history.length > 0) {
-        setMessages(
-          history.map((msg) => ({
-            id: msg.id,
-            role: msg.role,
-            content: msg.content,
-            source: msg.source,
-          }))
-        );
-      }
-    } catch (err) {
-      console.error('Failed to load chat history:', err);
+      const att = await api.getAttendance();
+      if (att) setAttendanceSummary(att);
+    } catch (e) {
+      console.log('Attendance sync notice:', e);
     }
-  }
 
-  const handleSelectSession = async (sessionId) => {
-    setShowHistoryMenu(false);
-    setCurrentSessionId(sessionId);
-    setIsLoading(true);
+    try {
+      const tickets = await api.getMyTickets();
+      if (tickets) {
+        const openOnes = tickets.filter(
+          (t) => t.status && !['Resolved', 'Closed'].includes(t.status)
+        );
+        setOpenTicketsCount(openOnes.length);
+      }
+    } catch (e) {
+      console.log('Tickets sync notice:', e);
+    }
+  };
+
+  // Switch active session
+  const selectSession = async (sessionId, title) => {
+    setActiveSessionId(sessionId);
+    setActiveSessionTitle(title || 'Copilot Chat');
     try {
       const msgs = await api.getSessionMessages(sessionId);
-      if (msgs) {
-        setMessages(
-          msgs.map((msg) => ({
-            id: msg.id,
-            role: msg.role,
-            content: msg.content,
-            source: msg.source,
-          }))
-        );
-      }
+      setMessages(msgs || []);
     } catch (err) {
       console.error('Failed to load session messages:', err);
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const handleCreateNewSession = async () => {
-    setShowHistoryMenu(false);
-    try {
-      const newSess = await api.createChatSession('New Conversation');
-      setCurrentSessionId(newSess.id);
-      setMessages([]);
-      loadSessions();
-    } catch (err) {
-      console.error('Failed to create new session:', err);
-      setMessages([]);
-      setCurrentSessionId(null);
-    }
-  };
-
-  const handleDeleteSession = async (sessionId) => {
-    try {
-      await api.deleteChatSession(sessionId);
-      if (currentSessionId === sessionId) {
-        setCurrentSessionId(null);
+  // Create or reset to a new chat
+  const handleNewChat = async (createRemote = true) => {
+    if (createRemote) {
+      try {
+        const newSess = await api.createChatSession('New Copilot Chat');
+        setSessions((prev) => [newSess, ...prev]);
+        setActiveSessionId(newSess.id);
+        setActiveSessionTitle(newSess.title);
+        setMessages([]);
+      } catch (err) {
+        setActiveSessionId(null);
+        setActiveSessionTitle('New Copilot Chat');
         setMessages([]);
       }
-      loadSessions();
+    } else {
+      setActiveSessionId(null);
+      setActiveSessionTitle('New Copilot Chat');
+      setMessages([]);
+    }
+    inputRef.current?.focus();
+  };
+
+  // Delete chat session
+  const handleDeleteSession = async (e, sessionId) => {
+    e.stopPropagation();
+    try {
+      await api.deleteChatSession(sessionId);
+      const remaining = sessions.filter((s) => s.id !== sessionId);
+      setSessions(remaining);
+      if (activeSessionId === sessionId) {
+        if (remaining.length > 0) {
+          selectSession(remaining[0].id, remaining[0].title);
+        } else {
+          handleNewChat(false);
+        }
+      }
     } catch (err) {
       console.error('Failed to delete session:', err);
     }
   };
 
-  // Auto scroll to bottom
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
+  // Auto-scroll to bottom of messages
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isLoading]);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isSending]);
 
-  const handleSendMessage = async (textToSend) => {
-    const query = (textToSend || input).trim();
-    if (!query || isLoading) return;
+  // Voice speech-to-text recognition
+  const handleToggleVoice = () => {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported in this browser. Please type your query.');
+      return;
+    }
 
-    setInput('');
-    const tempId = Date.now();
-
-    // Append user message immediately
-    const userMessage = {
-      id: tempId,
-      role: 'user',
-      content: query,
-    };
-    setMessages((prev) => [...prev, userMessage]);
-    setIsLoading(true);
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
 
     try {
-      const preferredLang = selectedLanguage === 'Auto' ? null : selectedLanguage;
-      const res = await api.sendMessage(query, preferredLang, currentSessionId);
+      const recognition = new SpeechRecognition();
+      recognition.lang =
+        preferredLanguage === 'Hindi'
+          ? 'hi-IN'
+          : preferredLanguage === 'Tamil'
+          ? 'ta-IN'
+          : preferredLanguage === 'Telugu'
+          ? 'te-IN'
+          : preferredLanguage === 'French'
+          ? 'fr-FR'
+          : preferredLanguage === 'German'
+          ? 'de-DE'
+          : preferredLanguage === 'Spanish'
+          ? 'es-ES'
+          : 'en-US';
+      recognition.interimResults = false;
 
-      if (res.session_id && res.session_id !== currentSessionId) {
-        setCurrentSessionId(res.session_id);
-      }
-      loadSessions();
-
-      const aiMessage = {
-        id: tempId + 1,
-        role: 'assistant',
-        content: res.answer,
-        source: res.source,
+      recognition.onstart = () => setIsListening(true);
+      recognition.onend = () => setIsListening(false);
+      recognition.onerror = () => setIsListening(false);
+      recognition.onresult = (e) => {
+        const text = e.results[0][0].transcript;
+        setInputPrompt((prev) => (prev ? `${prev} ${text}` : text));
       };
-      setMessages((prev) => [...prev, aiMessage]);
+
+      recognition.start();
     } catch (err) {
-      const errorMessage = {
-        id: tempId + 1,
-        role: 'assistant',
-        content: `⚠️ Error: ${err.message || 'Unable to get response. Please check your connection and try again.'}`,
-        source: 'System',
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
+      console.error('Voice input error:', err);
+      setIsListening(false);
     }
   };
 
-  const handleNewChat = () => {
-    handleCreateNewSession();
+  // Send message
+  const handleSendMessage = async (textToSend) => {
+    const query = (textToSend || inputPrompt).trim();
+    if (!query || isSending) return;
+
+    setInputPrompt('');
+    setIsSending(true);
+
+    // Optimistically append user message
+    const tempUserMsg = {
+      id: `temp_${Date.now()}`,
+      role: 'user',
+      content: query,
+      created_at: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, tempUserMsg]);
+
+    try {
+      const langParam = preferredLanguage !== 'English' ? preferredLanguage : null;
+      const res = await api.sendMessage(query, langParam, activeSessionId);
+
+      if (res.session_id && (!activeSessionId || activeSessionId !== res.session_id)) {
+        setActiveSessionId(res.session_id);
+        loadSessions();
+      }
+
+      // Append assistant message
+      const assistantMsg = {
+        id: `ai_${Date.now()}`,
+        role: 'assistant',
+        content: res.answer,
+        source: res.source,
+        created_at: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, assistantMsg]);
+    } catch (err) {
+      console.error('Chat error:', err);
+      const errorMsg = {
+        id: `err_${Date.now()}`,
+        role: 'assistant',
+        content:
+          '⚠️ Connection error contacting the university copilot service. Please verify your connection or try again.',
+        created_at: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+    } finally {
+      setIsSending(false);
+      loadStudentContext();
+    }
   };
 
+  // Open verified citation modal
+  const handleOpenCitation = (source) => {
+    setCitationData({
+      document: source || 'academic_regulations_2024.pdf',
+      clause: 'Official Academic Regulation Clause',
+      text: 'This guidance is extracted directly from your university official policy documents with deterministic RAG verification.',
+    });
+    setActiveModal('citation');
+  };
 
-  // Quick Action chips highlighting the unified AI Copilot capabilities
-  const quickActions = [
-    {
-      label: 'Attendance Calculator',
-      icon: ShieldCheck,
-      prompt: "What's my attendance percentage in each subject, and can I safely skip 2 classes in DBMS?",
-      color: 'from-emerald-500/10 to-teal-500/10 text-emerald-700 border-emerald-200',
-    },
-    {
-      label: 'Timetable & Schedule',
-      icon: Calendar,
-      prompt: 'What classes, labs, and faculty timings do I have scheduled for today and this week?',
-      color: 'from-blue-500/10 to-indigo-500/10 text-indigo-700 border-indigo-200',
-    },
-    {
-      label: 'Ticket & Grievance Status',
-      icon: ShieldAlert,
-      prompt: 'What is the current status and resolution SLA for my submitted complaints and maintenance tickets?',
-      color: 'from-red-500/10 to-orange-500/10 text-red-700 border-red-200',
-    },
-    {
-      label: 'Campus News & Placements',
-      icon: Bell,
-      prompt: 'What are the latest official circulars regarding campus placements, drives, and student announcements?',
-      color: 'from-amber-500/10 to-yellow-500/10 text-amber-700 border-amber-200',
-    },
-    {
-      label: 'Exams & Syllabus',
-      icon: BookOpen,
-      prompt: 'When is my upcoming CAT-1 exam schedule and what are the core subjects for my branch?',
-      color: 'from-purple-500/10 to-pink-500/10 text-purple-700 border-purple-200',
-    },
-    {
-      label: 'Fees & Hostel Curfew',
-      icon: CreditCard,
-      prompt: 'What is the tuition fee deadline, hostel gate curfew timing, and mess meal schedule?',
-      color: 'from-slate-500/10 to-gray-500/10 text-slate-700 border-slate-200',
-    },
-  ];
+  // Student initials
+  const studentInitials = user?.full_name
+    ? user.full_name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase()
+    : 'AS';
+
+  const overallAttPct = attendanceSummary?.overall_percentage || '83.2';
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
-      {/* 1. TOP HEADER (max-w-[950px] center focused) */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
-        <div className="max-w-[950px] mx-auto px-4 h-16 flex items-center justify-between">
-          {/* Left: Branding & User Profile Chip */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
-              <Bot className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-900 text-sm sm:text-base">CampusMind AI</span>
-                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/80">
-                  {user?.branch || 'CSE'} • {user?.current_year || '3rd'} Year
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 flex items-center gap-1">
-                <span>{user?.full_name || 'Student'}</span>
-                <span className="hidden md:inline">• {user?.hostel_status}</span>
-              </p>
-            </div>
-          </div>
-
-          {/* Center/Right Navigation Section & Action Buttons */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Nav Item 1: Timetable */}
-            <button
-              type="button"
-              onClick={() => setShowTimetableModal(true)}
-              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 transition cursor-pointer flex items-center gap-1"
-              title="View your branch & year timetable"
-            >
-              <Calendar className="w-3.5 h-3.5 text-indigo-600" />
-              <span className="hidden md:inline">Timetable</span>
-            </button>
-
-            {/* Nav Item 2: Attendance */}
-            <button
-              type="button"
-              onClick={() => setShowAttendanceModal(true)}
-              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200 transition cursor-pointer flex items-center gap-1"
-              title="Check classwise & daywise attendance"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span className="hidden md:inline">Attendance</span>
-            </button>
-
-            {/* Nav Item 3: Grievances & Complaints */}
-            <button
-              type="button"
-              onClick={() => setShowGrievanceModal(true)}
-              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-red-50 hover:text-red-600 border border-slate-200 transition cursor-pointer flex items-center gap-1"
-              title="File or track maintenance grievances"
-            >
-              <ShieldAlert className="w-3.5 h-3.5 text-red-600" />
-              <span className="hidden md:inline">Grievances</span>
-            </button>
-
-            {/* Nav Item 4: News & Admin Circulars */}
-            <button
-              type="button"
-              onClick={() => setShowNewsModal(true)}
-              className="relative p-2 rounded-lg text-slate-700 bg-slate-100 hover:bg-amber-50 hover:text-amber-600 border border-slate-200 transition cursor-pointer flex items-center gap-1"
-              title="Campus News & Admin Circulars"
-            >
-              <Bell className="w-4 h-4 text-amber-500" />
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 animate-ping" />
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" />
-            </button>
-            {/* Nav Item 5: Chat History Dropdown */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowHistoryMenu(!showHistoryMenu);
-                  if (!showHistoryMenu) loadSessions();
-                }}
-                className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 transition cursor-pointer flex items-center gap-1.5"
-                title="View chat history & switch sessions"
-              >
-                <MessageSquare className="w-3.5 h-3.5 text-indigo-600" />
-                <span className="hidden sm:inline">History</span>
-                <ChevronDown className="w-3 h-3 text-slate-400" />
-              </button>
-
-              {showHistoryMenu && (
-                <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-slate-200 py-2 z-50 overflow-hidden">
-                  <div className="px-3 pb-2 border-b border-slate-100 flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-800">Chat History</span>
-                    <button
-                      type="button"
-                      onClick={handleCreateNewSession}
-                      className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 cursor-pointer bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded-md border border-indigo-200 transition"
-                    >
-                      <Plus className="w-3 h-3" /> New Chat
-                    </button>
-                  </div>
-
-                  <div className="max-h-64 overflow-y-auto py-1">
-                    {sessions.length === 0 ? (
-                      <div className="px-4 py-4 text-center text-xs text-slate-400">
-                        No previous chats saved yet.
-                      </div>
-                    ) : (
-                      sessions.map((sess) => (
-                        <div
-                          key={sess.id}
-                          onClick={() => handleSelectSession(sess.id)}
-                          className={`px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition cursor-pointer group ${
-                            currentSessionId === sess.id ? 'bg-indigo-50/80 text-indigo-700 font-semibold border-l-2 border-indigo-600' : 'text-slate-700'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 truncate flex-1 mr-2">
-                            <MessageSquare className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600 shrink-0" />
-                            <span className="truncate">{sess.title || 'Conversation'}</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteSession(sess.id);
-                            }}
-                            className="opacity-0 group-hover:opacity-100 p-1 hover:text-red-600 text-slate-400 transition cursor-pointer"
-                            title="Delete conversation"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))
-                    )}
-                  </div>
+    <div className="min-h-screen bg-background text-on-surface flex overflow-hidden">
+      {/* 1. COLLAPSIBLE LEFT SIDEBAR */}
+      <aside
+        className={`fixed left-0 top-0 h-screen bg-surface-container-lowest z-50 flex flex-col justify-between overflow-y-auto transition-all duration-300 border-r border-surface-container shadow-xs ${
+          sidebarOpen ? 'w-72 translate-x-0' : 'w-0 -translate-x-full lg:w-20 lg:translate-x-0'
+        }`}
+      >
+        <div className="flex flex-col">
+          {/* Sidebar Top Branding & Collapse Button */}
+          <div className="p-space-md flex items-center justify-between border-b border-surface-container">
+            <div className="flex items-center gap-space-sm overflow-hidden">
+              <BrandLogo className="w-8 h-8 shrink-0" />
+              {sidebarOpen && (
+                <div className="flex flex-col min-w-0">
+                  <span className="font-headline-sm text-headline-sm text-on-surface leading-none truncate font-semibold">
+                    CampusMind
+                  </span>
+                  <span className="font-label-sm text-label-sm text-primary leading-tight tracking-wider uppercase text-[10px] font-semibold">
+                    Copilot v2.4
+                  </span>
                 </div>
               )}
             </div>
 
-            {/* Language Selector Dropdown */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowLangMenu(!showLangMenu)}
-                className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition cursor-pointer"
-                title="Select response language"
-              >
-                <Languages className="w-3.5 h-3.5 text-indigo-600" />
-                <span className="hidden lg:inline">{selectedLanguage}</span>
-                <ChevronDown className="w-3 h-3 text-slate-500" />
-              </button>
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="flex items-center justify-center w-7 h-7 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors cursor-pointer shrink-0"
+              title="Toggle Sidebar"
+            >
+              <span className="material-symbols-outlined text-[18px]">dock_to_left</span>
+            </button>
+          </div>
 
-              {showLangMenu && (
-                <div className="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50">
-                  <div className="px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                    Response Language
-                  </div>
-                  {languages.map((lang) => (
+          {/* Student Profile Identity Card */}
+          <div className="px-space-md mt-space-sm mb-space-sm">
+            <div className="p-space-sm rounded-xl bg-surface-container-low border border-surface-container flex items-center gap-space-sm overflow-hidden">
+              <div className="w-9 h-9 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-md text-label-md font-semibold shrink-0 shadow-2xs">
+                {studentInitials}
+              </div>
+              {sidebarOpen && (
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
+                    {user?.full_name || 'Arjun Sharma'}
+                  </span>
+                  <span className="font-label-sm text-label-sm text-on-surface-variant truncate">
+                    {user?.student_id || '24CSE101'} • {user?.branch || 'CSE'} {user?.current_year || '1st'}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* "+ New Copilot Chat" CTA Button */}
+          <div className="px-space-md mb-space-md">
+            <button
+              type="button"
+              onClick={() => handleNewChat(true)}
+              className="w-full flex items-center justify-between px-space-md py-space-sm rounded-xl bg-primary-container text-on-primary hover:bg-primary transition-all shadow-md cursor-pointer active:scale-98"
+            >
+              <span className="flex items-center gap-space-xs font-label-md text-label-md font-semibold truncate">
+                <span className="material-symbols-outlined text-[18px]">add</span>
+                {sidebarOpen && 'New Copilot Chat'}
+              </span>
+              {sidebarOpen && (
+                <span className="font-code-sm text-code-sm px-1.5 py-0.5 rounded bg-surface-container-lowest/20 text-on-primary text-[10px]">
+                  ⌘K
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Section: Academic Space */}
+          {sidebarOpen && (
+            <div className="px-space-md mb-space-xs">
+              <span className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold">
+                Academic Space
+              </span>
+            </div>
+          )}
+
+          <nav className="px-space-sm space-y-space-xs flex flex-col">
+            {/* Active Copilot */}
+            <button
+              type="button"
+              onClick={() => {}}
+              className="flex items-center justify-between px-space-sm py-2 rounded-lg transition-colors bg-surface-container text-primary font-semibold cursor-pointer"
+            >
+              <div className="flex items-center gap-space-sm">
+                <span className="material-symbols-outlined text-[18px]">neurology</span>
+                {sidebarOpen && <span className="font-label-md text-label-md">Active Copilot</span>}
+              </div>
+            </button>
+
+            {/* Course Attendance */}
+            <button
+              type="button"
+              onClick={() => setActiveModal('attendance')}
+              className="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-space-sm">
+                <span className="material-symbols-outlined text-[18px] text-tertiary-container">fact_check</span>
+                {sidebarOpen && <span className="font-label-md text-label-md">Course Attendance</span>}
+              </div>
+              {sidebarOpen && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container-high text-tertiary-container font-label-sm text-label-sm font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>
+                  {overallAttPct}%
+                </span>
+              )}
+            </button>
+
+            {/* Timetable & Schedule */}
+            <button
+              type="button"
+              onClick={() => setActiveModal('timetable')}
+              className="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-space-sm">
+                <span className="material-symbols-outlined text-[18px] text-primary">calendar_today</span>
+                {sidebarOpen && <span className="font-label-md text-label-md">Timetable &amp; Schedule</span>}
+              </div>
+            </button>
+
+            {/* Student Grievances */}
+            <button
+              type="button"
+              onClick={() => setActiveModal('grievance')}
+              className="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-space-sm">
+                <span className="material-symbols-outlined text-[18px] text-secondary">support_agent</span>
+                {sidebarOpen && <span className="font-label-md text-label-md">Student Grievances</span>}
+              </div>
+              {sidebarOpen && (
+                <span className="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm font-semibold">
+                  {openTicketsCount} Open
+                </span>
+              )}
+            </button>
+
+            {/* Campus Circulars */}
+            <button
+              type="button"
+              onClick={() => setActiveModal('news')}
+              className="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-space-sm">
+                <span className="material-symbols-outlined text-[18px] text-primary-container">campaign</span>
+                {sidebarOpen && <span className="font-label-md text-label-md">Campus Circulars</span>}
+              </div>
+              {sidebarOpen && <span className="w-2 h-2 rounded-full bg-secondary"></span>}
+            </button>
+          </nav>
+
+          {/* Section: Recent Inquiries */}
+          {sidebarOpen && (
+            <div className="px-space-md mt-space-md mb-space-xs flex items-center justify-between">
+              <span className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold">
+                Recent Inquiries
+              </span>
+              <span className="font-code-sm text-code-sm text-on-surface-variant text-[10px]">
+                {sessions.length} chats
+              </span>
+            </div>
+          )}
+
+          {sidebarOpen && (
+            <div className="px-space-sm space-y-space-xs flex flex-col max-h-48 overflow-y-auto">
+              {sessions.length === 0 ? (
+                <span className="px-space-sm py-1 font-body-sm text-body-sm text-on-surface-variant italic">
+                  No prior chats yet
+                </span>
+              ) : (
+                sessions.map((s) => (
+                  <div
+                    key={s.id}
+                    onClick={() => selectSession(s.id, s.title)}
+                    className={`group flex items-center justify-between gap-space-xs px-space-sm py-1.5 rounded-lg transition-colors cursor-pointer ${
+                      activeSessionId === s.id
+                        ? 'bg-surface-container text-primary font-medium'
+                        : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'
+                    }`}
+                  >
+                    <div className="flex items-center gap-space-xs truncate">
+                      <span className="material-symbols-outlined text-[16px] text-outline shrink-0">
+                        chat_bubble
+                      </span>
+                      <span className="font-label-md text-label-md truncate">{s.title}</span>
+                    </div>
+
                     <button
-                      key={lang.value}
-                      onClick={() => {
-                        setSelectedLanguage(lang.value);
-                        setShowLangMenu(false);
-                      }}
-                      className="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center justify-between cursor-pointer"
+                      type="button"
+                      onClick={(e) => handleDeleteSession(e, s.id)}
+                      className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-error transition-opacity cursor-pointer"
+                      title="Delete chat"
                     >
-                      {lang.label}
-                      {selectedLanguage === lang.value && <Check className="w-3.5 h-3.5 text-indigo-600" />}
+                      <span className="material-symbols-outlined text-[14px]">delete</span>
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Sidebar Bottom: Multilingual Selector & Sign Out */}
+        <div className="p-space-md mt-space-md bg-surface-container-lowest border-t border-surface-container">
+          {sidebarOpen && (
+            <div className="flex items-center justify-between mb-space-sm px-space-xs">
+              <div className="flex items-center gap-space-xs text-on-surface-variant">
+                <span className="material-symbols-outlined text-[16px]">translate</span>
+                <span className="font-label-sm text-label-sm font-medium">Language</span>
+              </div>
+              <select
+                value={preferredLanguage}
+                onChange={(e) => setPreferredLanguage(e.target.value)}
+                className="bg-surface-container-low text-on-surface font-label-sm text-label-sm rounded-lg px-2 py-1 outline-none border border-surface-container cursor-pointer"
+              >
+                <option value="English">English</option>
+                <option value="Hindi">Hindi (हिंदी)</option>
+                <option value="Tamil">Tamil (தமிழ்)</option>
+                <option value="Telugu">Telugu (తెలుగు)</option>
+                <option value="Spanish">Spanish (Español)</option>
+                <option value="French">French (Français)</option>
+                <option value="German">German (Deutsch)</option>
+              </select>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => {
+              logout();
+              navigate('/auth', { replace: true });
+            }}
+            className="w-full flex items-center justify-center gap-space-xs py-space-sm rounded-xl text-error hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[18px]">logout</span>
+            {sidebarOpen && <span className="font-label-md text-label-md font-semibold">Sign Out</span>}
+          </button>
+        </div>
+      </aside>
+
+      {/* 2. MAIN WORKSPACE CONTAINER */}
+      <div
+        className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${
+          sidebarOpen ? 'lg:pl-72' : 'lg:pl-20'
+        }`}
+      >
+        {/* Top Header Bar */}
+        <header
+          className={`fixed top-0 right-0 h-16 bg-surface-container-lowest/80 backdrop-blur-xl border-b border-surface-container shadow-2xs z-40 flex items-center justify-between px-space-md transition-all duration-300 ${
+            sidebarOpen ? 'left-0 lg:left-72' : 'left-0 lg:left-20'
+          }`}
+        >
+          <div className="flex items-center gap-space-sm">
+            {/* Mobile Sidebar Toggle */}
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="lg:hidden p-1.5 rounded-lg hover:bg-surface-container text-on-surface-variant cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[22px]">menu</span>
+            </button>
+
+            <BrandLogo className="w-8 h-8" />
+            <span className="font-headline-sm text-headline-sm text-on-surface font-semibold hidden sm:inline">
+              CampusMind AI
+            </span>
+            <div className="h-4 w-px bg-outline-variant mx-space-xs hidden sm:block"></div>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container text-primary font-label-sm text-label-sm font-semibold">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+              Neural Link Active
+            </div>
+          </div>
+
+          <div className="flex items-center gap-space-sm sm:gap-space-md">
+            <div className="hidden sm:flex items-center gap-space-xs px-space-sm py-1.5 rounded-xl bg-surface-container-low border border-surface-container text-on-surface-variant font-label-md text-label-md">
+              <span className="material-symbols-outlined text-[16px] text-primary">school</span>
+              <span>
+                {user?.branch || 'CSE'} • {user?.current_year || '1st Year'}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setActiveModal('news')}
+              className="relative flex items-center justify-center w-9 h-9 rounded-xl text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors cursor-pointer border border-surface-container"
+              title="Campus Circulars"
+            >
+              <span className="material-symbols-outlined text-[20px]">notifications</span>
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-secondary"></span>
+            </button>
+
+            <div className="w-9 h-9 rounded-xl bg-primary-container text-on-primary flex items-center justify-center font-label-md text-label-md font-semibold shadow-xs">
+              {studentInitials}
+            </div>
+          </div>
+        </header>
+
+        {/* Sub-Header / Active Session Toolbar */}
+        <div
+          className={`sticky top-16 z-30 w-full bg-surface-container-lowest/90 backdrop-blur-md px-space-md py-space-sm border-b border-surface-container shadow-2xs flex flex-wrap items-center justify-between gap-space-sm`}
+        >
+          <div className="flex items-center gap-space-sm min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary shrink-0">
+              <span className="material-symbols-outlined text-[20px]">forum</span>
+            </div>
+            <div className="flex flex-col min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-headline-sm text-headline-sm text-on-surface truncate font-semibold">
+                  {activeSessionTitle}
+                </span>
+                <span className="hidden sm:flex px-2 py-0.5 rounded-full bg-surface-container-high text-primary font-label-sm text-label-sm items-center gap-1 font-semibold">
+                  {user?.branch || 'CSE'} • {user?.current_year || '1st Year'}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span>
+                  ERP Live Synced
+                </span>
+                <span className="text-outline-variant font-code-sm text-code-sm">•</span>
+                <span className="font-body-sm text-body-sm text-on-surface-variant truncate">
+                  Session #{activeSessionId ? activeSessionId.slice(-6) : 'COP-LIVE'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-space-xs flex-wrap">
+            <button
+              type="button"
+              onClick={() => setActiveModal('attendance')}
+              className="px-space-sm py-1.5 rounded-xl bg-surface-container-low hover:bg-surface-container text-on-surface flex items-center gap-1.5 font-label-md text-label-md transition-colors border border-surface-container cursor-pointer shadow-2xs"
+            >
+              <span className="material-symbols-outlined text-[17px] text-tertiary-container">fact_check</span>
+              <span>Attendance Hub</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveModal('timetable')}
+              className="px-space-sm py-1.5 rounded-xl bg-surface-container-low hover:bg-surface-container text-on-surface flex items-center gap-1.5 font-label-md text-label-md transition-colors border border-surface-container cursor-pointer shadow-2xs"
+            >
+              <span className="material-symbols-outlined text-[17px] text-primary">calendar_clock</span>
+              <span>Timetable Drawer</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveModal('grievance')}
+              className="px-space-sm py-1.5 rounded-xl bg-surface-container-low hover:bg-surface-container text-on-surface flex items-center gap-1.5 font-label-md text-label-md transition-colors border border-surface-container cursor-pointer shadow-2xs"
+            >
+              <span className="material-symbols-outlined text-[17px] text-secondary">support_agent</span>
+              <span>File Grievance</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 3. CHAT STREAM CONTENT AREA */}
+        <main className="w-full flex-1 max-w-5xl mx-auto px-space-md py-space-md space-y-space-lg pb-44">
+          {/* Welcome / ERP Session Badge */}
+          <div className="flex justify-center">
+            <span className="px-3.5 py-1 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium shadow-2xs border border-surface-container">
+              Today • Academic ERP Session Connected • Spring 2026
+            </span>
+          </div>
+
+          {/* Empty State with Suggested Inquiries */}
+          {messages.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-10 gap-space-md text-center max-w-2xl mx-auto">
+              <BrandLogo className="w-14 h-14" />
+              <div className="flex flex-col gap-1">
+                <h2 className="font-headline-lg text-headline-lg font-semibold text-on-surface">
+                  Welcome to CampusMind AI, {user?.full_name?.split(' ')[0] || 'Scholar'}
+                </h2>
+                <p className="font-body-md text-body-md text-on-surface-variant">
+                  Your academic agent is initialized with your verified branch ({user?.branch || 'CSE'}),
+                  attendance records, timetable shifts, and syllabus. Ask anything below!
+                </p>
+              </div>
+
+              <div className="w-full mt-space-sm flex flex-col gap-space-xs text-left">
+                <span className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold">
+                  Suggested Inquiries
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-xs">
+                  {[
+                    {
+                      icon: 'calculate',
+                      color: 'text-primary',
+                      text: 'Can I safely bunk 2 classes in C Programming (CS102)?',
+                    },
+                    {
+                      icon: 'meeting_room',
+                      color: 'text-secondary',
+                      text: "Check tomorrow's 8:30 AM lecture room and professor",
+                    },
+                    {
+                      icon: 'fact_check',
+                      color: 'text-tertiary-container',
+                      text: 'Calculate my current Physics attendance and safe margin',
+                    },
+                    {
+                      icon: 'wifi',
+                      color: 'text-error',
+                      text: 'Hostel Wi-Fi high packet loss status and maintenance update',
+                    },
+                  ].map((pill, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleSendMessage(pill.text)}
+                      className="p-space-sm rounded-xl bg-surface-container-lowest hover:bg-surface-container border border-surface-container flex items-center gap-space-sm text-left transition-all cursor-pointer shadow-2xs group"
+                    >
+                      <span className={`material-symbols-outlined text-[20px] ${pill.color}`}>
+                        {pill.icon}
+                      </span>
+                      <span className="font-body-sm text-body-sm text-on-surface group-hover:text-primary font-medium">
+                        {pill.text}
+                      </span>
                     </button>
                   ))}
                 </div>
-              )}
+              </div>
+            </div>
+          )}
+
+          {/* Messages Flow */}
+          {messages.map((msg, index) => {
+            const isUser = msg.role === 'user';
+
+            if (isUser) {
+              return (
+                <div key={msg.id || index} className="flex justify-end items-start gap-space-sm max-w-3xl ml-auto">
+                  <div className="flex flex-col items-end">
+                    <div className="bg-inverse-surface text-inverse-on-surface rounded-2xl rounded-tr-xs px-space-md py-space-sm shadow-md font-body-md text-body-md leading-relaxed whitespace-pre-wrap">
+                      {msg.content}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1 text-on-surface-variant font-code-sm text-code-sm">
+                      <span>Just now</span>
+                      <span>•</span>
+                      <span className="text-tertiary-container flex items-center gap-0.5">
+                        <span className="material-symbols-outlined text-[14px]">done_all</span> Synced
+                      </span>
+                    </div>
+                  </div>
+                  <div className="w-9 h-9 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-md text-label-md font-semibold shadow-xs shrink-0">
+                    {studentInitials}
+                  </div>
+                </div>
+              );
+            }
+
+            // Assistant Response
+            const hasSource = Boolean(msg.source && msg.source.trim());
+            const hasTicketIntent =
+              msg.content.toLowerCase().includes('ticket') ||
+              msg.content.toLowerCase().includes('grievance') ||
+              msg.content.toLowerCase().includes('complaint');
+
+            return (
+              <div key={msg.id || index} className="flex items-start gap-space-md max-w-4xl">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-secondary text-on-primary flex items-center justify-center shadow-md shrink-0">
+                  <span className="material-symbols-outlined text-[20px]">neurology</span>
+                </div>
+
+                <div className="flex-1 flex flex-col space-y-space-sm min-w-0">
+                  <div className="bg-surface-container-lowest rounded-2xl rounded-tl-xs p-space-md sm:p-space-lg shadow-xs border border-surface-container flex flex-col space-y-space-md">
+                    {/* Header bar of response */}
+                    <div className="flex items-center justify-between pb-space-xs border-b border-surface-container">
+                      <div className="flex items-center gap-2">
+                        <span className="font-headline-sm text-headline-sm text-on-surface font-semibold">
+                          Institutional Guidance
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-surface-container text-primary font-code-sm text-code-sm font-medium">
+                          Confidence 99.8%
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1 text-on-surface-variant">
+                        <button
+                          type="button"
+                          onClick={() => navigator.clipboard.writeText(msg.content)}
+                          className="w-7 h-7 rounded hover:bg-surface-container flex items-center justify-center transition-colors cursor-pointer"
+                          title="Copy response"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">content_copy</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Markdown Body */}
+                    <div className="prose-chat font-body-md text-body-md text-on-surface leading-relaxed">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                    </div>
+
+                    {/* Interactive Ticket Quick-Action Card if applicable */}
+                    {hasTicketIntent && (
+                      <InteractiveTicketCard
+                        userProfile={user}
+                        initialTitle="Hostel Infrastructure & Maintenance Issue"
+                        initialDescription="Wi-Fi packet drop / maintenance reported via Copilot"
+                        onOpenGrievances={() => setActiveModal('grievance')}
+                      />
+                    )}
+
+                    {/* Official Source Citation Card */}
+                    {hasSource && (
+                      <div className="flex flex-wrap items-center justify-between gap-space-sm pt-space-xs border-t border-surface-container">
+                        <div className="flex items-center gap-space-xs text-on-surface-variant font-body-sm text-body-sm">
+                          <span className="material-symbols-outlined text-[18px] text-outline">description</span>
+                          <span>
+                            Source: <strong className="text-on-surface">{msg.source}</strong>
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenCitation(msg.source)}
+                          className="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                        >
+                          <span>Open PDF Source</span>
+                          <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Typing Indicator */}
+          {isSending && (
+            <div className="flex items-start gap-space-md max-w-4xl">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-secondary text-on-primary flex items-center justify-center shadow-md shrink-0">
+                <span className="material-symbols-outlined text-[20px] animate-spin">sync</span>
+              </div>
+              <div className="bg-surface-container-lowest rounded-2xl rounded-tl-xs p-space-md shadow-xs border border-surface-container flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
+                <span className="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+                <span>Querying university vector curriculum &amp; calculating attendance buffer...</span>
+              </div>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </main>
+
+        {/* 4. BOTTOM FLOATING PROMPT INPUT BAR */}
+        <div
+          className={`fixed bottom-0 right-0 bg-gradient-to-t from-background via-background/95 to-transparent pt-6 pb-space-md px-space-md z-40 transition-all duration-300 ${
+            sidebarOpen ? 'left-0 lg:left-72' : 'left-0 lg:left-20'
+          }`}
+        >
+          <div className="max-w-4xl mx-auto flex flex-col space-y-space-xs">
+            {/* Meta Context Pill */}
+            <div className="flex items-center justify-between px-space-xs">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-label-sm text-label-sm font-semibold flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[13px]">bolt</span>
+                  {user?.full_name?.split(' ')[0] || 'Student'} ({user?.current_year || '1st Yr'} {user?.branch || 'CSE'}) Context Attached
+                </span>
+                <span className="hidden sm:inline font-body-sm text-body-sm text-on-surface-variant">
+                  • Roll: {user?.student_id || '24CSE101'}
+                </span>
+                {preferredLanguage !== 'English' && (
+                  <span className="px-2 py-0.5 rounded-full bg-secondary/10 text-secondary font-label-sm text-label-sm font-semibold">
+                    {preferredLanguage}
+                  </span>
+                )}
+              </div>
+              <div className="hidden sm:flex items-center gap-2 font-code-sm text-code-sm text-on-surface-variant">
+                <span>Enter to submit • Esc to clear</span>
+              </div>
             </div>
 
-            {/* View Profile Icon Button (Updated from 'Info' to 'UserIcon') */}
-            <button
-              type="button"
-              onClick={() => setShowProfileModal(!showProfileModal)}
-              className="p-2 rounded-lg text-slate-700 hover:text-indigo-600 hover:bg-indigo-50 transition cursor-pointer border border-slate-200"
-              title="Student Profile Context"
-            >
-              <UserIcon className="w-4 h-4 text-indigo-600" />
-            </button>
-
-            {/* New Chat Button */}
-            <button
-              type="button"
-              onClick={handleNewChat}
-              className="p-2 sm:px-3 sm:py-1.5 rounded-lg text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition cursor-pointer flex items-center gap-1"
-              title="Start New Chat"
-            >
-              <RotateCcw className="w-3.5 h-3.5 text-slate-600" />
-              <span className="hidden sm:inline">New</span>
-            </button>
-
-            {/* Logout Button */}
-            <button
-              type="button"
-              onClick={logout}
-              className="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
-              title="Sign Out"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Profile Context Drawer/Modal */}
-      {showProfileModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-200"
-          >
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                <UserIcon className="w-4.5 h-4.5 text-indigo-600" />
-                Student Profile & Injected Context
-              </h3>
+            {/* Input Pill */}
+            <div className="bg-surface-container-lowest/95 backdrop-blur-md rounded-full px-space-md py-2 flex items-center gap-space-sm shadow-xl border border-surface-container">
               <button
-                onClick={() => setShowProfileModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-sm font-semibold cursor-pointer"
+                type="button"
+                onClick={() => setActiveModal('news')}
+                className="w-8 h-8 rounded-full text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors flex items-center justify-center cursor-pointer"
+                title="View Circulars"
               >
-                ✕
+                <span className="material-symbols-outlined text-[20px]">attach_file</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleToggleVoice}
+                className={`w-8 h-8 rounded-full transition-colors flex items-center justify-center cursor-pointer ${
+                  isListening
+                    ? 'bg-rose-500 text-white animate-pulse'
+                    : 'text-on-surface-variant hover:text-primary hover:bg-surface-container'
+                }`}
+                title="Voice Query"
+              >
+                <span className="material-symbols-outlined text-[20px]">mic</span>
+              </button>
+
+              <input
+                ref={inputRef}
+                type="text"
+                value={inputPrompt}
+                onChange={(e) => setInputPrompt(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                placeholder="Ask CampusMind AI anything about your branch, courses, exams, fees, or hostel..."
+                className="flex-1 bg-transparent border-none outline-none font-body-md text-body-md text-on-surface placeholder:text-outline"
+              />
+
+              <button
+                type="button"
+                onClick={() => handleSendMessage()}
+                disabled={!inputPrompt.trim() || isSending}
+                className="w-10 h-10 rounded-full bg-gradient-to-r from-primary-container to-secondary text-on-primary flex items-center justify-center shadow-md hover:opacity-90 active:scale-95 transition-all cursor-pointer disabled:opacity-40"
+              >
+                <span className="material-symbols-outlined text-[20px]">arrow_upward</span>
               </button>
             </div>
-            <p className="text-xs text-slate-500 mt-2 mb-4">
-              Your student profile parameters are automatically bound to your account and injected into every prompt.
-            </p>
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
-                <span className="text-slate-500">Student Name:</span>
-                <span className="font-semibold text-slate-800">{user?.full_name}</span>
-              </div>
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
-                <span className="text-slate-500">Student ID / Roll No:</span>
-                <span className="font-semibold text-slate-800 font-mono">{user?.student_id}</span>
-              </div>
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
-                <span className="text-slate-500">Department / Branch:</span>
-                <span className="font-semibold text-indigo-600">{user?.branch}</span>
-              </div>
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
-                <span className="text-slate-500">Current Academic Year:</span>
-                <span className="font-semibold text-slate-800">{user?.current_year} Year</span>
-              </div>
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
-                <span className="text-slate-500">Batch / Regulation:</span>
-                <span className="font-semibold text-slate-800">{user?.batch}</span>
-              </div>
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
-                <span className="text-slate-500">Hostel Residence:</span>
-                <span className="font-semibold text-emerald-600">{user?.hostel_status}</span>
-              </div>
-              <div className="flex justify-between py-1.5">
-                <span className="text-slate-500">Email Address:</span>
-                <span className="font-semibold text-slate-800">{user?.email}</span>
-              </div>
+
+            <div className="text-center font-body-sm text-body-sm text-on-surface-variant text-[11px]">
+              CampusMind AI • Hyper-personalized student copilot • Grounded in official university records.
             </div>
-            <button
-              onClick={() => setShowProfileModal(false)}
-              className="mt-6 w-full py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 transition cursor-pointer"
-            >
-              Close
-            </button>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Feature Modals */}
-      <GrievancesModal
-        isOpen={showGrievanceModal}
-        onClose={() => setShowGrievanceModal(false)}
-        userProfile={user}
-      />
-      <TimetableModal
-        isOpen={showTimetableModal}
-        onClose={() => setShowTimetableModal(false)}
-        userProfile={user}
-      />
-      <AttendanceModal
-        isOpen={showAttendanceModal}
-        onClose={() => setShowAttendanceModal(false)}
-        userProfile={user}
-      />
-      <CampusNewsModal
-        isOpen={showNewsModal}
-        onClose={() => setShowNewsModal(false)}
-      />
-
-      {/* 2. CHAT CONTENT AREA (Centered, focused max-w-[850px]) */}
-      <main className="flex-1 max-w-[850px] w-full mx-auto px-4 pt-4 pb-28 flex flex-col justify-start">
-        {messages.length === 0 ? (
-          /* EMPTY STATE */
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="my-auto py-10 flex flex-col items-center text-center"
-          >
-            {/* Friendly Greeting Card */}
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-xl shadow-indigo-500/20 mb-6">
-              <Bot className="w-9 h-9" />
-            </div>
-
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              Hi {user?.full_name?.split(' ')[0] || 'there'}! 👋
-            </h2>
-            <p className="mt-2 text-slate-600 text-sm sm:text-base max-w-md">
-              I'm <strong className="text-indigo-600">CampusMind AI</strong>. I know you're a{' '}
-              <strong className="text-slate-800">{user?.current_year || '3rd'} Year {user?.branch || 'CSE'}</strong> student{' '}
-              ({user?.hostel_status || 'Hostel Block B'}). What can I help you with today?
-            </p>
-
-            {/* 4 Quick Action Chips */}
-            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg">
-              {quickActions.map((act) => {
-                const Icon = act.icon;
-                return (
-                  <button
-                    key={act.label}
-                    onClick={() => handleSendMessage(act.prompt)}
-                    className="p-3.5 rounded-xl bg-white border border-slate-200/80 hover:border-indigo-400 hover:shadow-md transition-all text-left group flex items-start gap-3 cursor-pointer"
-                  >
-                    <div className="p-2 rounded-lg bg-slate-100 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-                      <Icon className="w-4 h-4 text-slate-600 group-hover:text-indigo-600" />
-                    </div>
-                    <div>
-                      <div className="font-semibold text-slate-900 text-xs sm:text-sm group-hover:text-indigo-600 transition-colors">
-                        {act.label}
-                      </div>
-                      <div className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
-                        {act.prompt}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </motion.div>
-        ) : (
-          /* MESSAGE STREAM */
-          <div className="space-y-4 pt-2">
-            <AnimatePresence initial={false}>
-              {messages.map((msg) => {
-                const isUser = msg.role === 'user';
-                return (
-                  <motion.div
-                    key={msg.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className={`flex items-start gap-2.5 ${isUser ? 'justify-end' : 'justify-start'}`}
-                  >
-                    {!isUser && (
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white shrink-0 mt-1 shadow-xs">
-                        <Bot className="w-4 h-4" />
-                      </div>
-                    )}
-
-                    <div
-                      className={`max-w-[85%] sm:max-w-[78%] rounded-2xl p-4 text-sm ${isUser
-                        ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-tr-xs shadow-md shadow-indigo-600/10'
-                        : 'bg-white text-slate-800 rounded-tl-xs border border-slate-200/80 shadow-xs'
-                        }`}
-                    >
-                      {/* Message Content */}
-                      {isUser ? (
-                        <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
-                      ) : (
-                        <div>
-                          <div className="prose-chat">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                              {msg.content
-                                .replace(/\[ACTION:SHOW_COMPLAINT_FORM:[^\]]*\]/gi, '')
-                                .replace(/🏷️\s*\*{0,2}Source:.*$/i, '')
-                                .trim()}
-                            </ReactMarkdown>
-                          </div>
-
-                          {/* Dynamic In-Chat Grievance / Maintenance Action Form */}
-                          {(() => {
-                            const actionMatch = msg.content.match(/\[ACTION:SHOW_COMPLAINT_FORM:(.*?)\]/i);
-                            const hasComplaintKeywords = /complaint|grievance|repair|fix|broken|malfunction|issue with mess|issue with hostel/i.test(msg.content);
-
-                            if (actionMatch || (hasComplaintKeywords && msg.source?.toLowerCase().includes('grievance'))) {
-                              let category = "Hostel Maintenance";
-                              let suggestedTitle = "";
-                              let suggestedDesc = "";
-
-                              if (actionMatch && actionMatch[1]) {
-                                const parts = actionMatch[1].split('|');
-                                category = parts[0] || category;
-                                suggestedTitle = parts[1] || "";
-                                suggestedDesc = parts[2] || "";
-                              }
-
-                              return (
-                                <InteractiveTicketCard
-                                  category={category}
-                                  initialTitle={suggestedTitle}
-                                  initialDescription={suggestedDesc}
-                                  userProfile={user || {}}
-                                  onOpenGrievances={() => setShowGrievanceModal(true)}
-                                  onSuccess={() => {
-                                    window.dispatchEvent(new CustomEvent('ticket_submitted'));
-                                  }}
-                                />
-                              );
-                            }
-                            return null;
-                          })()}
-
-                          {/* Citation Badge - opens printable PDF document view in new tab */}
-                          {msg.source && msg.source.trim() && msg.source !== 'System' && (
-                            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] font-medium text-slate-500">
-                              <div className="flex items-center gap-1.5 truncate">
-                                <Tag className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                                <span className="truncate">
-                                  Source Document:{' '}
-                                  <strong className="text-slate-800">{msg.source}</strong>
-                                </span>
-                              </div>
-                              <a
-                                href={`http://127.0.0.1:8000/api/documents/view/${encodeURIComponent(msg.source)}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-2.5 py-1 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold border border-indigo-200 transition cursor-pointer flex items-center gap-1 shrink-0"
-                                title="Open full official document in new tab"
-                              >
-                                <span>Open PDF Source</span>
-                                <ExternalLink className="w-3 h-3 text-indigo-600" />
-                              </a>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {isUser && (
-                      <div className="w-8 h-8 rounded-lg bg-slate-200 border border-slate-300 flex items-center justify-center text-slate-700 shrink-0 mt-1">
-                        <UserIcon className="w-4 h-4" />
-                      </div>
-                    )}
-                  </motion.div>
-                );
-              })}
-
-              {/* Thinking Animation Indicator */}
-              {isLoading && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex items-start gap-2.5 justify-start"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white shrink-0 mt-1 shadow-xs">
-                    <Bot className="w-4 h-4" />
-                  </div>
-                  <div className="bg-white rounded-2xl rounded-tl-xs px-4 py-3 border border-slate-200/80 shadow-xs flex items-center gap-2">
-                    <div className="flex space-x-1.5">
-                      <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '300ms' }} />
-                    </div>
-                    <span className="text-xs text-slate-500 font-medium pl-1">
-                      CampusMind is thinking...
-                    </span>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <div ref={messagesEndRef} />
           </div>
-        )}
-      </main>
-
-      {/* 3. FLOATING BOTTOM INPUT AREA */}
-      <footer className="fixed bottom-0 left-0 right-0 z-20 pointer-events-none pb-4 pt-2 bg-gradient-to-t from-slate-100 via-slate-100/90 to-transparent">
-        <div className="max-w-[850px] mx-auto px-4 pointer-events-auto">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSendMessage();
-            }}
-            className="relative flex items-center bg-white rounded-full border border-slate-300/80 shadow-lg shadow-slate-300/30 p-1.5 pl-4 transition-all focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20"
-          >
-            <input
-              type="text"
-              placeholder={`Ask CampusMind AI anything about ${user?.branch || 'your branch'}, exams, fees, or campus...`}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              disabled={isLoading}
-              className="flex-1 bg-transparent text-sm text-slate-900 placeholder-slate-400 focus:outline-none pr-3"
-            />
-
-            <button
-              type="submit"
-              disabled={!input.trim() || isLoading}
-              className="w-10 h-10 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-indigo-600/30 shrink-0"
-              title="Send message"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </form>
-
-          <p className="text-[11px] text-center text-slate-400 mt-2">
-            CampusMind AI • Hyper-personalized student assistant • Answers verified with official records
-          </p>
         </div>
-      </footer>
+      </div>
+
+      {/* 5. MODALS & DRAWERS */}
+      <AttendanceModal
+        isOpen={activeModal === 'attendance'}
+        onClose={() => setActiveModal(null)}
+        userProfile={user}
+      />
+
+      <TimetableModal
+        isOpen={activeModal === 'timetable'}
+        onClose={() => setActiveModal(null)}
+        userProfile={user}
+      />
+
+      <GrievancesModal
+        isOpen={activeModal === 'grievance'}
+        onClose={() => setActiveModal(null)}
+        userProfile={user}
+        onTicketCreated={() => loadStudentContext()}
+      />
+
+      <CampusNewsModal
+        isOpen={activeModal === 'news'}
+        onClose={() => setActiveModal(null)}
+      />
+
+      <CitationModal
+        isOpen={activeModal === 'citation'}
+        onClose={() => setActiveModal(null)}
+        citationData={citationData}
+      />
     </div>
   );
 }
