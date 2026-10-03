@@ -1,9 +1,15 @@
 """
-Test conversational responsiveness and non-robotic RAG answering.
+Test conversational responsiveness and Gemini-driven RAG answering.
 """
 
+import sys
 import asyncio
 import time
+from pathlib import Path
+
+# Add project root to sys.path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from backend.rag_engine import generate_rag_response
 
 async def test():
@@ -17,7 +23,7 @@ async def test():
     }
 
     print("=" * 60)
-    print("Testing Casual & Academic Intent Flow")
+    print("Testing 100% Gemini-Driven Intent & RAG Flow")
     print("=" * 60)
 
     # Test 1: Casual 'hi'
@@ -25,7 +31,7 @@ async def test():
     res1 = await generate_rag_response("hi", student)
     print(f"\n[Test 1] Query: 'hi' in {time.time()-t0:.3f}s")
     print(f"Reply:  {res1['answer']}")
-    print(f"Source: '{res1['source']}' (should be empty)")
+    print(f"Source: '{res1['source']}' (should be empty for casual)")
     assert res1['source'] == "", "Casual response should have no source!"
 
     # Test 2: Casual 'how are you?'
@@ -33,7 +39,7 @@ async def test():
     res2 = await generate_rag_response("how are you?", student)
     print(f"\n[Test 2] Query: 'how are you?' in {time.time()-t0:.3f}s")
     print(f"Reply:  {res2['answer']}")
-    print(f"Source: '{res2['source']}' (should be empty)")
+    print(f"Source: '{res2['source']}' (should be empty for casual)")
     assert res2['source'] == "", "Casual response should have no source!"
 
     # Test 3: Academic question 'When is my Internal 1 exam?'
@@ -44,7 +50,7 @@ async def test():
     print(f"Source: '{res3['source']}'")
     assert res3['source'] != "", "Academic response should have official source!"
 
-    print("\n✅ All Intent & Responsiveness Tests Passed!")
+    print("\n✅ All Gemini-Driven Intent & RAG Tests Passed!")
 
 if __name__ == "__main__":
     asyncio.run(test())

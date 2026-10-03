@@ -1,18 +1,18 @@
 """
-Smart RAG Engine for CampusMind AI.
-Features:
-- Instant Conversational Routing (0ms latency for greetings and small talk)
-- Natural, Human-like Student Peer/Mentor Persona (No robotic profile recitation)
-- Primary Model: Gemini 3.8 Flash (with seamless Gemini 3.x resilient fallback)
-- Dynamic metadata filtering based on the student's branch, year, and batch
-- Contextual fallback to campus-wide policies (applicable_to == 'all')
-- Strict zero-hallucination factual grounding for academic queries
-- Multilingual assistance (Hindi, Telugu, Tamil, Spanish, French, German, English, etc.)
-- Selective citation tracking (only when official records are referenced)
+Unified Smart RAG Engine for CampusMind AI.
+Architecture:
+- 100% LLM-First: Every user query is directly analyzed and processed by Google Gemini.
+- Zero Hardcoded Dictionaries: Gemini dynamically reasons about intent (casual small talk vs. academic inquiry).
+- Silent Personalization: Injects student profile (name, branch, year, batch, residence) without robotic recitation.
+- Targeted Vector Search: Retrieves official university records matching the student's branch and year.
+- Factual Grounding: Uses official records with document citations when academic details are requested.
+- Free-form Intelligence: Answers general knowledge, advice, and conversation using Gemini's native brain.
+- Resilient Multi-Tier Model Fallback: Gemini 3.8 Flash -> 3.7 Flash -> 3.6 Flash -> 3.5 Flash Lite -> 3.1 Flash Lite -> 2.5 Flash.
+- Multilingual Support: Native multi-language comprehension (Hindi, Telugu, Tamil, French, Spanish, etc.).
 """
 
 import os
-import random
+import re
 from pathlib import Path
 from typing import List, Dict, Any, Tuple
 from dotenv import load_dotenv
@@ -31,7 +31,7 @@ CHROMA_DIR = BASE_DIR / "backend" / "chroma_db"
 COLLECTION_NAME = "campusmind_knowledge"
 PRIMARY_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
 
-# Seamless fallback hierarchy across Gemini 3.x Flash models
+# Seamless fallback hierarchy across Gemini Flash models
 MODEL_HIERARCHY = [
     PRIMARY_MODEL,
     "gemini-3.7-flash",
@@ -79,81 +79,6 @@ def extract_content_text(content: Any) -> str:
     if isinstance(content, dict) and "text" in content:
         return content["text"]
     return str(content)
-
-# -------------------------------------------------------------
-# FAST INTENT ROUTER: Instant greetings & conversational handling
-# -------------------------------------------------------------
-
-CASUAL_RESPONSES = {
-    "hi": [
-        "Hey {name}! 👋 How's your day going? What can I help you with today on campus?",
-        "Hi {name}! Great to see you. Looking for exam schedules, fee details, syllabus, or anything else?",
-        "Hey {name}! What's on your mind today? Ready to help you with anything academic or campus-related!"
-    ],
-    "hello": [
-        "Hello {name}! 👋 Hope classes are treating you well. What can I look up for you today?",
-        "Hi {name}! How can I help you today with your courses, exams, or hostel details?",
-        "Hello there! What would you like to check out today?"
-    ],
-    "hey": [
-        "Hey {name}! What can I help you find today?",
-        "Hey there! How's your week going? Let me know what you need help with."
-    ],
-    "how are you": [
-        "I'm doing great, thank you for asking! 😊 Ready to help you navigate anything on campus. How are you doing today?",
-        "Doing fantastic! Excited to help you out. What's on your agenda today, {name}?"
-    ],
-    "who are you": [
-        "I'm **CampusMind AI**, your personal university assistant! I have direct access to your department's curriculum, exam calendars, fee breakdown, hostel guidelines, and university policies so you never have to search through circulars.",
-        "I'm **CampusMind AI** — built to make college life effortless. You can ask me about your exam schedules, fee due dates, electives, hostel rules, or placement criteria anytime!"
-    ],
-    "thanks": [
-        "You're very welcome, {name}! 😊 Feel free to ask if you need anything else.",
-        "Glad I could help! Good luck with your studies, {name}!",
-        "Anytime! I'm always here if you have more questions."
-    ],
-    "thank you": [
-        "You're very welcome, {name}! 😊 Let me know whenever you need anything else.",
-        "Happy to help! Have a great day ahead!",
-        "Anytime, {name}! Keep up the great work!"
-    ],
-    "bye": [
-        "Goodbye {name}! Have an awesome day ahead and good luck with your classes! 🚀",
-        "See you later! Feel free to message me whenever you have questions."
-    ]
-}
-
-def detect_instant_casual(query: str, first_name: str) -> str:
-    """Returns an immediate, warm response for common greetings without invoking LLM or RAG."""
-    clean_q = query.strip().lower().rstrip("?!.,")
-    
-    # Check exact casual keys
-    if clean_q in CASUAL_RESPONSES:
-        template = random.choice(CASUAL_RESPONSES[clean_q])
-        return template.format(name=first_name)
-    
-    # Short variants like "hi there", "hello!", "hey bot"
-    for key, responses in CASUAL_RESPONSES.items():
-        if clean_q.startswith(key + " ") or clean_q.endswith(" " + key):
-            # Check there are no academic words in the query
-            academic_terms = {"exam", "fee", "fees", "syllabus", "hostel", "mess", "curfew", "attendance", "date", "credit", "grade"}
-            if not any(term in clean_q for term in academic_terms):
-                return random.choice(responses).format(name=first_name)
-                
-    return None
-
-def is_college_query(query: str) -> bool:
-    """Detects if query is an academic or university-specific inquiry needing RAG."""
-    clean_q = query.lower()
-    college_keywords = {
-        "exam", "exams", "internal", "endsem", "test", "schedule", "timetable", "date", "dates",
-        "fee", "fees", "tuition", "payment", "due", "deadline", "cost", "penalty", "scholarship",
-        "syllabus", "subject", "subjects", "course", "courses", "credit", "credits", "elective", "basket", "core", "curriculum",
-        "hostel", "mess", "dining", "room", "food", "warden", "curfew", "in-time", "intime", "gate", "block a", "block b",
-        "attendance", "condonation", "medical", "detain", "detainment", "grade", "cgpa", "sgpa", "gpa", "library", "book",
-        "placement", "internship", "capstone", "project", "company", "recruit", "package", "lpa", "dean", "rule", "rules", "policy"
-    }
-    return any(k in clean_q for k in college_keywords)
 
 # -------------------------------------------------------------
 # VECTOR SEARCH & RETRIEVAL
@@ -215,32 +140,8 @@ def query_vector_store(
 
     return documents, metadatas
 
-async def get_search_query(query: str, preferred_language: str = None) -> str:
-    """Translates regional non-ASCII script (e.g. Hindi, Telugu) to English search terms."""
-    if all(ord(c) < 128 for c in query):
-        return query
-
-    if preferred_language and preferred_language.lower() == "english":
-        return query
-
-    for model_name in MODEL_HIERARCHY:
-        try:
-            llm = ChatGoogleGenerativeAI(model=model_name, temperature=0.1, max_retries=0)
-            translation_prompt = (
-                "Translate the following question into 3-5 concise English search keywords for university documents. "
-                f"Question: {query}"
-            )
-            resp = await llm.ainvoke(translation_prompt)
-            text = extract_content_text(resp.content).strip()
-            if text:
-                return text
-        except Exception:
-            continue
-
-    return query
-
 async def invoke_llm_with_fallback(prompt: ChatPromptTemplate, question: str) -> str:
-    """Invokes primary model with fast seamless fallback across Gemini 3.x family."""
+    """Invokes primary model with fast seamless fallback across Gemini Flash family."""
     last_err = None
     for model_name in MODEL_HIERARCHY:
         try:
@@ -265,7 +166,7 @@ async def invoke_llm_with_fallback(prompt: ChatPromptTemplate, question: str) ->
     return "I couldn't generate a response. Please try asking again."
 
 # -------------------------------------------------------------
-# MAIN RAG ENTRYPOINT
+# MAIN INTELLIGENT AI ENTRYPOINT (100% GEMINI-POWERED)
 # -------------------------------------------------------------
 
 async def generate_rag_response(
@@ -274,9 +175,11 @@ async def generate_rag_response(
     preferred_language: str = None
 ) -> Dict[str, Any]:
     """
-    Smart conversational pipeline:
-    1. Fast route for greetings/small talk (0ms latency, no vector search).
-    2. RAG route for academic/campus questions (targeted 3 chunks, friendly peer persona).
+    Intelligent AI Pipeline:
+    Every query is analyzed and answered by Google Gemini.
+    Gemini autonomously determines:
+    1. Casual Conversation / Small Talk / Advice / Unrelated Questions -> Responds conversationally with its own brain (No citations).
+    2. Campus & Academic Queries -> Grounds answers in the retrieved official documents with citations.
     """
     user_name = user_profile.get("full_name", "Student")
     first_name = user_name.split()[0] if user_name else "there"
@@ -286,52 +189,9 @@ async def generate_rag_response(
     hostel_status = user_profile.get("hostel_status", "Day Scholar")
     student_id = user_profile.get("student_id", "")
 
-    # STEP 1: Check instant casual response for greetings/small talk
-    instant_reply = detect_instant_casual(query, first_name)
-    if instant_reply:
-        return {
-            "answer": instant_reply,
-            "source": "",  # No source for casual greeting
-            "branch": user_branch,
-            "year": user_year
-        }
-
-    # STEP 2: Check if this is a general conversational chat (not college-specific)
-    is_academic = is_college_query(query)
-
-    if not is_academic:
-        # Conversational query: Ask LLM without vector search (fast, zero document overhead)
-        conversational_prompt = ChatPromptTemplate.from_messages([
-            ("system", f"""You are CampusMind AI, a warm, friendly, and helpful university AI companion for college students.
-You are chatting with {first_name}, who is a student in {user_branch}.
-Speak naturally, conversationally, and warmly like a friendly, encouraging senior student or mentor.
-Do NOT mechanically list their profile or recitation of facts.
-Keep your response concise and conversational (1-3 sentences).
-Do not cite any sources."""),
-            ("human", "{question}")
-        ])
-        try:
-            answer = await invoke_llm_with_fallback(conversational_prompt, query)
-            return {
-                "answer": answer,
-                "source": "",
-                "branch": user_branch,
-                "year": user_year
-            }
-        except Exception as e:
-            return {
-                "answer": f"Hey {first_name}! How can I help you today with your courses, exams, or campus life?",
-                "source": "",
-                "branch": user_branch,
-                "year": user_year
-            }
-
-    # STEP 3: Academic / Campus inquiry -> Execute targeted RAG
-    search_query = await get_search_query(query, preferred_language)
-
-    # Retrieve top targeted chunks for rich, complete context
+    # Retrieve relevant institutional records from ChromaDB (fast local HNSW search)
     docs, metadatas = query_vector_store(
-        query=search_query,
+        query=query,
         user_branch=user_branch,
         user_year=user_year,
         top_k=5
@@ -346,7 +206,7 @@ Do not cite any sources."""),
         formatted_context_list.append(f"--- Document: {doc_title} ---\n{doc_text}")
 
     context_str = "\n\n".join(formatted_context_list) if formatted_context_list else "No official records found."
-    primary_source = ", ".join(list(sources_set)[:2]) if sources_set else "Official College Records"
+    fallback_source = list(sources_set)[0] if sources_set else "Official College Record"
 
     # Multilingual instruction
     lang_instruction = ""
@@ -355,29 +215,38 @@ Do not cite any sources."""),
     else:
         lang_instruction = "If the user asks in Hindi, Telugu, Tamil, Spanish, French, or another language, reply fluently in that same language. Otherwise, reply in clear, friendly English."
 
-    # Natural, Human-like Persona: NO robotic recitation of profile!
-    system_prompt = f"""You are CampusMind AI, a friendly, intelligent university copilot and mentor for college students.
+    # Unified System Prompt: Gemini reasons about intent and formulates response
+    system_prompt = f"""You are CampusMind AI, an intelligent, empathetic, and friendly university AI copilot and mentor for college students.
 
-Student Context (Use this context silently to answer with the right branch/year facts; DO NOT recite their profile back to them):
-- Student Name: {user_name} (Call them {first_name})
-- Branch: {user_branch}
+Student Profile (Known context about the student; DO NOT recite their profile back to them robotically):
+- Student Name: {user_name} (Address them warmly as {first_name})
+- Department / Branch: {user_branch}
 - Current Year: {user_year} Year
-- Batch: {user_batch}
-- Residence: {hostel_status}
+- Admission Batch: {user_batch}
+- Living Status: {hostel_status}
 
-GUIDELINES:
-1. Tone: Warm, supportive, conversational, and direct — like a smart senior friend or helpful academic advisor.
-2. CRITICAL: DO NOT start your response with a robotic recitation of their profile (e.g. NEVER say: "Hello [Name]! As a [Branch] [Year] student residing in [Hostel]..."). Jump straight to the answer in a friendly, conversational way!
-3. Ground your facts (dates, fees, courses, rules) strictly in the Official College Records context below.
-4. If asked about exam schedules, timetables, fees, or curricula, ALWAYS directly present the actual dates, milestones, subjects, or tables from the context (e.g. for exam roadmaps, detail CAT-1, CAT-2, Lab, and End-Sem dates and subject allocations for both Odd and Even Semesters). Do NOT withhold the dates or tell them to check the document if the dates are present in the context!
-5. If a specific detail is genuinely not found in the records, politely state: "I couldn't find the exact details for this in the current records, so it's best to check with the administration or department office."
-6. Format key dates or amounts clearly using bold text, tables, or bullet points where helpful.
-7. {lang_instruction}
-8. At the very end, append the citation on a new line:
-   `🏷️ Source: [Name of the document used]`
-
-Official College Records Context:
+Official Institutional Records (Context available to answer university-specific questions):
 {context_str}
+
+HOW TO REASON AND RESPOND:
+1. INTELLIGENT INTENT RECOGNITION:
+   - For Casual Conversation, Greetings & General Topics:
+     If the user is saying "hi", "hello", "how are you", checking in, sharing their feelings, asking for general advice, asking technical or programming questions, or talking about anything NOT requiring institutional college records:
+     -> Use your own natural intelligence, warmth, personality, and humor! Be an inspiring, friendly senior student or campus mentor.
+     -> Answer directly and conversationally.
+     -> DO NOT mention, invent, or cite any document sources for casual or general knowledge questions. Leave citations out completely.
+
+   - For University-Specific Inquiries:
+     If the student is asking about official academic calendars, exam schedules, dates, tuition fees, course curricula, hostel curfews, mess timings, attendance rules (75% rule), medical condonations, or placement rules:
+     -> Rely strictly on the Official Institutional Records provided above.
+     -> Provide specific, clear details: list out actual dates, semesters, course codes, and monetary figures using neat bullet points or Markdown tables.
+     -> At the very end of your response on a new line, attach the source citation:
+        `🏷️ Source: [Official Document Title]`
+
+2. TONE & STYLE:
+   - Warm, supportive, conversational, and direct.
+   - Never say: "Hello {user_name}! As a {user_year} student in {user_branch} residing in {hostel_status}...". Jump straight into answering naturally!
+   - {lang_instruction}
 """
 
     prompt = ChatPromptTemplate.from_messages([
@@ -386,18 +255,32 @@ Official College Records Context:
     ])
 
     try:
-        answer_text = await invoke_llm_with_fallback(prompt, query)
+        raw_response = await invoke_llm_with_fallback(prompt, query)
+        
+        # Parse citation if Gemini determined this was an academic/institutional query
+        extracted_source = ""
+        clean_answer = raw_response.strip()
+
+        # Look for 🏷️ Source: [Document Name] or Source: [Document Name] at the end
+        source_pattern = r'(?:🏷️\s*)?Source:\s*\[?(.*?)\]?$'
+        match = re.search(source_pattern, clean_answer, re.IGNORECASE | re.MULTILINE)
+        
+        if match:
+            extracted_source = match.group(1).strip().strip("[]*`")
+            # If the extracted source matched a placeholder, clean it
+            if not extracted_source or extracted_source.lower() in ("official document title", "official document used", "none"):
+                extracted_source = fallback_source
         
         return {
-            "answer": answer_text,
-            "source": primary_source,
+            "answer": clean_answer,
+            "source": extracted_source,
             "branch": user_branch,
             "year": user_year
         }
     except Exception as e:
         print(f"[RAG] Error invoking LLM: {e}")
         return {
-            "answer": f"I ran into an issue retrieving that detail right now. Please try asking again in a moment.",
+            "answer": f"Hey {first_name}! I encountered a momentary hiccup connecting to the AI model. Please try asking again in a moment!",
             "source": "",
             "branch": user_branch,
             "year": user_year

@@ -4,11 +4,13 @@ Tests personalization, branch filtering, hostel knowledge, and multilingual hand
 """
 
 import asyncio
-import os
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(BASE_DIR))
+
 load_dotenv(BASE_DIR / ".env")
 load_dotenv(BASE_DIR / "backend" / ".env")
 os.environ.pop("GEMINI_API_KEY", None)
