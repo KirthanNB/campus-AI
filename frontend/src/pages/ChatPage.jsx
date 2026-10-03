@@ -287,7 +287,9 @@ export default function ChatPage() {
       >
         <div className="flex flex-col">
           {/* Sidebar Top Branding & Collapse Button */}
-          <div className="p-space-md flex items-center justify-between border-b border-surface-container">
+          <div className={`p-space-md flex items-center border-b border-surface-container ${
+            sidebarOpen ? 'justify-between' : 'justify-center gap-space-xs'
+          }`}>
             <div className="flex items-center gap-space-sm overflow-hidden">
               <BrandLogo className="w-8 h-8 shrink-0" />
               {sidebarOpen && (
@@ -306,15 +308,17 @@ export default function ChatPage() {
               type="button"
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="flex items-center justify-center w-7 h-7 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors cursor-pointer shrink-0"
-              title="Toggle Sidebar"
+              title={sidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
             >
               <span className="material-symbols-outlined text-[18px]">dock_to_left</span>
             </button>
           </div>
 
           {/* Student Profile Identity Card */}
-          <div className="px-space-md mt-space-sm mb-space-sm">
-            <div className="p-space-sm rounded-xl bg-surface-container-low border border-surface-container flex items-center gap-space-sm overflow-hidden">
+          <div className={`${sidebarOpen ? 'px-space-md' : 'px-space-xs flex justify-center'} mt-space-sm mb-space-sm`}>
+            <div className={`rounded-xl bg-surface-container-low border border-surface-container flex items-center overflow-hidden ${
+              sidebarOpen ? 'p-space-sm gap-space-sm w-full' : 'p-1.5 justify-center'
+            }`}>
               <div className="w-9 h-9 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-md text-label-md font-semibold shrink-0 shadow-2xs">
                 {studentInitials}
               </div>
@@ -332,14 +336,19 @@ export default function ChatPage() {
           </div>
 
           {/* "+ New Copilot Chat" CTA Button */}
-          <div className="px-space-md mb-space-md">
+          <div className={`${sidebarOpen ? 'px-space-md' : 'px-space-xs flex justify-center'} mb-space-md`}>
             <button
               type="button"
               onClick={() => handleNewChat(true)}
-              className="w-full flex items-center justify-between px-space-md py-space-sm rounded-xl bg-primary-container text-on-primary hover:bg-primary transition-all shadow-md cursor-pointer active:scale-98"
+              title={!sidebarOpen ? "New Copilot Chat (⌘K)" : undefined}
+              className={`flex items-center rounded-xl bg-primary-container text-on-primary hover:bg-primary transition-all shadow-md cursor-pointer active:scale-98 ${
+                sidebarOpen
+                  ? 'w-full justify-between px-space-md py-space-sm'
+                  : 'w-10 h-10 justify-center p-0'
+              }`}
             >
-              <span className="flex items-center gap-space-xs font-label-md text-label-md font-semibold truncate">
-                <span className="material-symbols-outlined text-[18px]">add</span>
+              <span className="flex items-center justify-center gap-space-xs font-label-md text-label-md font-semibold">
+                <span className="material-symbols-outlined text-[20px]">add</span>
                 {sidebarOpen && 'New Copilot Chat'}
               </span>
               {sidebarOpen && (
@@ -359,15 +368,20 @@ export default function ChatPage() {
             </div>
           )}
 
-          <nav className="px-space-sm space-y-space-xs flex flex-col">
+          <nav className={`${sidebarOpen ? 'px-space-sm' : 'px-space-xs items-center'} space-y-space-xs flex flex-col`}>
             {/* Active Copilot */}
             <button
               type="button"
               onClick={() => {}}
-              className="flex items-center justify-between px-space-sm py-2 rounded-lg transition-colors bg-surface-container text-primary font-semibold cursor-pointer"
+              title={!sidebarOpen ? "Active Copilot" : undefined}
+              className={`flex items-center rounded-lg transition-colors bg-surface-container text-primary font-semibold cursor-pointer ${
+                sidebarOpen
+                  ? 'justify-between px-space-sm py-2 w-full'
+                  : 'justify-center w-10 h-10 p-0'
+              }`}
             >
-              <div className="flex items-center gap-space-sm">
-                <span className="material-symbols-outlined text-[18px]">neurology</span>
+              <div className="flex items-center justify-center gap-space-sm">
+                <span className="material-symbols-outlined text-[20px]">neurology</span>
                 {sidebarOpen && <span className="font-label-md text-label-md">Active Copilot</span>}
               </div>
             </button>
@@ -376,10 +390,15 @@ export default function ChatPage() {
             <button
               type="button"
               onClick={() => setActiveModal('attendance')}
-              className="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors cursor-pointer"
+              title={!sidebarOpen ? `Course Attendance (${overallAttPct}%)` : undefined}
+              className={`flex items-center rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors cursor-pointer ${
+                sidebarOpen
+                  ? 'justify-between px-space-sm py-2 w-full'
+                  : 'justify-center w-10 h-10 p-0'
+              }`}
             >
-              <div className="flex items-center gap-space-sm">
-                <span className="material-symbols-outlined text-[18px] text-tertiary-container">fact_check</span>
+              <div className="flex items-center justify-center gap-space-sm">
+                <span className="material-symbols-outlined text-[20px] text-tertiary-container">fact_check</span>
                 {sidebarOpen && <span className="font-label-md text-label-md">Course Attendance</span>}
               </div>
               {sidebarOpen && (
@@ -394,10 +413,15 @@ export default function ChatPage() {
             <button
               type="button"
               onClick={() => setActiveModal('timetable')}
-              className="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors cursor-pointer"
+              title={!sidebarOpen ? "Timetable & Schedule" : undefined}
+              className={`flex items-center rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors cursor-pointer ${
+                sidebarOpen
+                  ? 'justify-between px-space-sm py-2 w-full'
+                  : 'justify-center w-10 h-10 p-0'
+              }`}
             >
-              <div className="flex items-center gap-space-sm">
-                <span className="material-symbols-outlined text-[18px] text-primary">calendar_today</span>
+              <div className="flex items-center justify-center gap-space-sm">
+                <span className="material-symbols-outlined text-[20px] text-primary">calendar_today</span>
                 {sidebarOpen && <span className="font-label-md text-label-md">Timetable &amp; Schedule</span>}
               </div>
             </button>
@@ -406,10 +430,15 @@ export default function ChatPage() {
             <button
               type="button"
               onClick={() => setActiveModal('grievance')}
-              className="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors cursor-pointer"
+              title={!sidebarOpen ? `Student Grievances (${openTicketsCount} Open)` : undefined}
+              className={`flex items-center rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors cursor-pointer ${
+                sidebarOpen
+                  ? 'justify-between px-space-sm py-2 w-full'
+                  : 'justify-center w-10 h-10 p-0'
+              }`}
             >
-              <div className="flex items-center gap-space-sm">
-                <span className="material-symbols-outlined text-[18px] text-secondary">support_agent</span>
+              <div className="flex items-center justify-center gap-space-sm">
+                <span className="material-symbols-outlined text-[20px] text-secondary">support_agent</span>
                 {sidebarOpen && <span className="font-label-md text-label-md">Student Grievances</span>}
               </div>
               {sidebarOpen && (
@@ -423,10 +452,15 @@ export default function ChatPage() {
             <button
               type="button"
               onClick={() => setActiveModal('news')}
-              className="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors cursor-pointer"
+              title={!sidebarOpen ? "Campus Circulars" : undefined}
+              className={`flex items-center rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors cursor-pointer ${
+                sidebarOpen
+                  ? 'justify-between px-space-sm py-2 w-full'
+                  : 'justify-center w-10 h-10 p-0'
+              }`}
             >
-              <div className="flex items-center gap-space-sm">
-                <span className="material-symbols-outlined text-[18px] text-primary-container">campaign</span>
+              <div className="flex items-center justify-center gap-space-sm">
+                <span className="material-symbols-outlined text-[20px] text-primary-container">campaign</span>
                 {sidebarOpen && <span className="font-label-md text-label-md">Campus Circulars</span>}
               </div>
               {sidebarOpen && <span className="w-2 h-2 rounded-full bg-secondary"></span>}
@@ -485,7 +519,7 @@ export default function ChatPage() {
         </div>
 
         {/* Sidebar Bottom: Multilingual Selector & Sign Out */}
-        <div className="p-space-md mt-space-md bg-surface-container-lowest border-t border-surface-container">
+        <div className={`${sidebarOpen ? 'p-space-md' : 'p-space-xs flex flex-col items-center'} mt-space-md bg-surface-container-lowest border-t border-surface-container`}>
           {sidebarOpen && (
             <div className="flex items-center justify-between mb-space-sm px-space-xs">
               <div className="flex items-center gap-space-xs text-on-surface-variant">
@@ -514,9 +548,12 @@ export default function ChatPage() {
               logout();
               navigate('/auth', { replace: true });
             }}
-            className="w-full flex items-center justify-center gap-space-xs py-space-sm rounded-xl text-error hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors cursor-pointer"
+            title={!sidebarOpen ? "Sign Out" : undefined}
+            className={`flex items-center justify-center gap-space-xs rounded-xl text-error hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors cursor-pointer ${
+              sidebarOpen ? 'w-full py-space-sm' : 'w-10 h-10 p-0'
+            }`}
           >
-            <span className="material-symbols-outlined text-[18px]">logout</span>
+            <span className="material-symbols-outlined text-[20px]">logout</span>
             {sidebarOpen && <span className="font-label-md text-label-md font-semibold">Sign Out</span>}
           </button>
         </div>
