@@ -18,13 +18,8 @@ export default function ChatPage() {
   const navigate = useNavigate();
   const { user, logout, token } = useAuthStore();
 
-  // Navigation & UI state: collapsed initially on mobile screens (< 1024px)
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth >= 1024;
-    }
-    return false;
-  });
+  // Navigation & UI state: default collapsed so that the chat conversation is always immediately front-and-center
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeModal, setActiveModal] = useState(null); // 'attendance' | 'timetable' | 'grievance' | 'news' | 'citation'
   const [citationData, setCitationData] = useState(null);
 
@@ -357,8 +352,9 @@ export default function ChatPage() {
     <div className="min-h-screen bg-background text-on-surface flex overflow-hidden">
       {/* 1. COLLAPSIBLE LEFT SIDEBAR */}
       <aside
-        className={`fixed left-0 top-0 h-screen bg-surface-container-lowest z-50 flex flex-col justify-between overflow-y-auto transition-all duration-300 border-r border-surface-container shadow-xs ${sidebarOpen ? 'w-72 translate-x-0' : 'w-0 -translate-x-full lg:w-20 lg:translate-x-0'
-          }`}
+        className={`fixed left-0 top-0 h-screen bg-surface-container-lowest z-50 flex flex-col justify-between overflow-y-auto transition-all duration-300 border-r border-surface-container shadow-xs ${
+          sidebarOpen ? 'w-72 translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-20'
+        }`}
       >
         <div className="flex flex-col">
           {/* Sidebar Top Branding & Collapse Button */}
