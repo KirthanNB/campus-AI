@@ -408,14 +408,14 @@ export default function ChatPage() {
                             
                             if (actionMatch || (hasComplaintKeywords && msg.source?.toLowerCase().includes('grievance'))) {
                               let category = "Hostel Maintenance";
-                              let suggestedTitle = "Maintenance / Grievance Request";
+                              let suggestedTitle = "";
                               let suggestedDesc = "";
 
                               if (actionMatch && actionMatch[1]) {
                                 const parts = actionMatch[1].split('|');
                                 category = parts[0] || category;
-                                suggestedTitle = parts[1] || suggestedTitle;
-                                suggestedDesc = parts[2] || suggestedDesc;
+                                suggestedTitle = parts[1] || "";
+                                suggestedDesc = parts[2] || "";
                               }
 
                               return (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FileText,
   CheckCircle,
@@ -19,12 +19,17 @@ export default function InteractiveTicketCard({
   userProfile = {}
 }) {
   const [ticketCategory, setTicketCategory] = useState(category);
-  const [title, setTitle] = useState(initialTitle || `${category} Request`);
+  const [title, setTitle] = useState(initialTitle || "");
   const [description, setDescription] = useState(initialDescription || "");
-  const [priority, setPriority] = useState("High");
   const [submitting, setSubmitting] = useState(false);
   const [submittedTicket, setSubmittedTicket] = useState(null);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (initialTitle) setTitle(initialTitle);
+    if (initialDescription) setDescription(initialDescription);
+    if (category) setTicketCategory(category);
+  }, [initialTitle, initialDescription, category]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,7 +46,7 @@ export default function InteractiveTicketCard({
         title: title.trim(),
         description: description.trim(),
         location: userProfile.hostel_status || "Hostel Block B, Room 304",
-        priority: priority
+        priority: "Medium"
       });
       setSubmittedTicket(res);
     } catch (err) {
@@ -129,35 +134,19 @@ export default function InteractiveTicketCard({
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3">
-        {/* Category & Priority Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <div>
-            <label className="block text-[11px] font-medium text-slate-300 mb-1">Issue Category</label>
-            <select
-              value={ticketCategory}
-              onChange={(e) => setTicketCategory(e.target.value)}
-              className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-indigo-500"
-            >
-              <option value="Hostel Maintenance">🏠 Hostel Maintenance (Wi-Fi, Electrical, Plumbing)</option>
-              <option value="Mess Food Issue">🍲 Mess Food Quality & Hygiene</option>
-              <option value="Academic Grievance">📚 Academic & Marks Grievance</option>
-              <option value="General Campus">🏢 Campus Infrastructure & Security</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-medium text-slate-300 mb-1">Urgency Level</label>
-            <select
-              value={priority}
-              onChange={(e) => setPriority(e.target.value)}
-              className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-indigo-500"
-            >
-              <option value="High">🟠 High Priority (24 Hr Resolution)</option>
-              <option value="Medium">🟡 Standard (48 Hr Resolution)</option>
-              <option value="Urgent">🔴 Urgent Emergency</option>
-              <option value="Low">🟢 Low</option>
-            </select>
-          </div>
+        {/* Issue Category */}
+        <div>
+          <label className="block text-[11px] font-medium text-slate-300 mb-1">Issue Category</label>
+          <select
+            value={ticketCategory}
+            onChange={(e) => setTicketCategory(e.target.value)}
+            className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-indigo-500"
+          >
+            <option value="Hostel Maintenance">🏠 Hostel Maintenance (Wi-Fi, Electrical, Plumbing)</option>
+            <option value="Mess Food Issue">🍲 Mess Food Quality & Hygiene</option>
+            <option value="Academic Grievance">📚 Academic & Marks Grievance</option>
+            <option value="General Campus">🏢 Campus Infrastructure & Security</option>
+          </select>
         </div>
 
         {/* Title */}
@@ -168,7 +157,7 @@ export default function InteractiveTicketCard({
             required
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Wi-Fi router offline & fan regulator issue"
+            placeholder="e.g. Wi-Fi router offline in room 304"
             className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
           />
         </div>
@@ -181,7 +170,7 @@ export default function InteractiveTicketCard({
             rows={2}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Provide any specific room, floor, or food details..."
+            placeholder="Describe what problem you are facing..."
             className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
           />
         </div>
@@ -215,7 +204,7 @@ export default function InteractiveTicketCard({
           ) : (
             <>
               <Send className="w-3.5 h-3.5" />
-              <span>Submit Official Ticket (Instant Resolution SLA)</span>
+              <span>Submit Official Ticket</span>
             </>
           )}
         </button>

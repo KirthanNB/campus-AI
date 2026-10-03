@@ -20,7 +20,10 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 load_dotenv(BASE_DIR / "backend" / ".env")
-os.environ.pop("GEMINI_API_KEY", None)
+
+# Ensure API key is mapped to GOOGLE_API_KEY if user provided GEMINI_API_KEY
+if os.getenv("GEMINI_API_KEY") and not os.getenv("GOOGLE_API_KEY"):
+    os.environ["GOOGLE_API_KEY"] = os.getenv("GEMINI_API_KEY")
 
 import chromadb
 from chromadb.utils import embedding_functions
@@ -29,17 +32,16 @@ from langchain_core.prompts import ChatPromptTemplate
 
 CHROMA_DIR = BASE_DIR / "backend" / "chroma_db"
 COLLECTION_NAME = "campusmind_knowledge"
-PRIMARY_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+PRIMARY_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
-# Seamless fallback hierarchy across Gemini Flash models
-# Prioritizing fast responsiveness and lowest latency
+# Seamless fallback hierarchy across verified active Gemini models
 MODEL_HIERARCHY = [
     PRIMARY_MODEL,
     "gemini-2.5-flash",
-    "gemini-3.5-flash-lite",
     "gemini-3.7-flash",
-    "gemini-3.6-flash",
+    "gemini-3.5-flash-lite",
     "gemini-3.1-flash-lite",
+    "gemini-3.1-pro-preview",
 ]
 
 _retrieval_cache = {}  # In-memory LRU cache for repeat queries
@@ -255,10 +257,16 @@ HANDLING IN-SCOPE UNIVERSITY INQUIRIES & COMPLAINTS:
 - Ground your responses strictly in the Official Institutional Records below. Provide specific dates, subject allocations, amounts, and step-by-step procedures using neat bullet points or Markdown tables.
 - If the student is asking to file a complaint, report an issue, or request maintenance (such as broken Wi-Fi, electricity, plumbing, hostel repair, mess food quality issue, or academic grievance):
   -> DO NOT write long generic paragraphs telling them to go to another portal.
-  -> Provide a short 2-3 bullet point summary of the official policy, resolution SLA (e.g. 24-48 Hours), and offline desk, and tell {first_name} they can submit their ticket directly using the interactive form below!
-  -> Append an action tag on its own line:
-     `[ACTION:SHOW_COMPLAINT_FORM:Category|Suggested Title|Suggested Description]`
-     Where Category is one of "Hostel Maintenance", "Mess Food Issue", "Academic Grievance", or "General Campus".
+  -> Check if the user has explained the specific problem they are facing:
+     * CASE 1: If the user HAS explained the problem they are facing (e.g. "fan not spinning in room 304", "mess food was spoiled today", "water leakage in washroom"):
+       - Pre-fill the Title and Description with a clean summary of the problem they described.
+       - Tell the user: "I have filled the complaint form with the issue details you mentioned. Please review it carefully before you submit!"
+       - Append the action tag: `[ACTION:SHOW_COMPLAINT_FORM:Category|Extracted Title|Extracted Description]`
+     * CASE 2: If the user HAS NOT explained the specific problem yet (e.g. "I want to file a complaint", "hostel complaint", "raise a grievance", "mess issue"):
+       - DO NOT pre-fill or guess fake details for Title or Description. Leave them completely empty so the user can explain what they want to complain about.
+       - Tell the user: "Here is the complaint form. Please fill in what problem you are facing, review it, and click submit."
+       - Append the action tag with empty title and description: `[ACTION:SHOW_COMPLAINT_FORM:Category||]`
+  -> Where Category is one of "Hostel Maintenance", "Mess Food Issue", "Academic Grievance", or "General Campus".
 - At the very end of your response on a new line, append the citation:
   `🏷️ Source: [Official Document Title]`
 

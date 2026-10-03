@@ -20,7 +20,10 @@ sys.path.insert(0, str(BASE_DIR))
 
 load_dotenv(BASE_DIR / ".env")
 load_dotenv(BASE_DIR / "backend" / ".env")
-os.environ.pop("GEMINI_API_KEY", None)
+
+# Ensure API key is mapped to GOOGLE_API_KEY if needed
+if os.getenv("GEMINI_API_KEY") and not os.getenv("GOOGLE_API_KEY"):
+    os.environ["GOOGLE_API_KEY"] = os.getenv("GEMINI_API_KEY")
 
 from backend.rag_engine import generate_rag_response
 
