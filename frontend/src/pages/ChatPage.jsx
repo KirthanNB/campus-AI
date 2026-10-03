@@ -642,7 +642,7 @@ export default function ChatPage() {
                     {
                       icon: 'calculate',
                       color: 'text-primary',
-                      text: 'Can I safely bunk 2 classes in C Programming (CS102)?',
+                      text: 'What is my current attendance in C Programming (CS102)?',
                     },
                     {
                       icon: 'meeting_room',
@@ -652,7 +652,7 @@ export default function ChatPage() {
                     {
                       icon: 'fact_check',
                       color: 'text-tertiary-container',
-                      text: 'Calculate my current Physics attendance and safe margin',
+                      text: 'Check if my Physics attendance meets the 75% end-sem requirement',
                     },
                     {
                       icon: 'wifi',
@@ -791,7 +791,7 @@ export default function ChatPage() {
               </div>
               <div className="bg-surface-container-lowest rounded-2xl rounded-tl-xs p-space-md shadow-xs border border-surface-container flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
                 <span className="w-2 h-2 rounded-full bg-primary animate-ping"></span>
-                <span>Querying university vector curriculum &amp; calculating attendance buffer...</span>
+                <span>Querying university vector curriculum &amp; checking course eligibility...</span>
               </div>
             </div>
           )}
