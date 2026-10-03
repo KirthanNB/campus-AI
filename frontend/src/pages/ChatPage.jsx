@@ -512,6 +512,7 @@ export default function ChatPage() {
                                   initialTitle={suggestedTitle}
                                   initialDescription={suggestedDesc}
                                   userProfile={user || {}}
+                                  onOpenGrievances={() => setShowGrievanceModal(true)}
                                   onSuccess={() => {
                                     window.dispatchEvent(new CustomEvent('ticket_submitted'));
                                   }}
