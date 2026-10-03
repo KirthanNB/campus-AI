@@ -1,5 +1,10 @@
 fastapi
 uvicorn
+sqlalchemy
+passlib[bcrypt]
+bcrypt
+pyjwt
+python-multipart
 langchain
 langchain-classic
 langchain-core
@@ -11,3 +16,4 @@ chromadb
 pypdf
 python-dotenv
 pydantic
+

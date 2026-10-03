@@ -154,13 +154,15 @@ source backend/venv/bin/activate
 
 # Install dependencies
 pip install -r backend/requirements.txt
-pip install pyjwt python-multipart
 
-# Generate the synthetic knowledge base (171 documents)
+# Generate the synthetic knowledge base (172 documents)
 python seed_data.py
 
 # Ingest and index documents into ChromaDB
 python ingest_data.py
+
+# Seed official demo student accounts into SQLite
+python -m backend.seed_users
 
 # Start the FastAPI backend server
 python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
