@@ -97,10 +97,20 @@ export default function GrievancesModal({ isOpen, onClose, userProfile, onTicket
         initial={{ scale: 0.96, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.96, opacity: 0 }}
-        className="bg-surface-container-lowest rounded-2xl max-w-5xl w-full p-space-lg shadow-2xl flex flex-col space-y-space-md max-h-[90vh] overflow-y-auto border border-surface-container"
+        className="relative bg-surface-container-lowest rounded-2xl max-w-5xl w-full p-space-lg shadow-2xl flex flex-col space-y-space-md max-h-[90vh] overflow-y-auto border border-surface-container"
       >
+        {/* Top Right Close Button for Section Component */}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close Grievance Portal"
+          className="absolute top-4 right-4 z-20 w-9 h-9 rounded-xl bg-surface-container/70 hover:bg-surface-container text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors cursor-pointer shadow-xs border border-surface-container"
+        >
+          <span className="material-symbols-outlined text-[20px]">close</span>
+        </button>
+
         {/* Banner Section */}
-        <div className="relative overflow-hidden rounded-xl bg-surface-container-low p-space-md sm:p-space-lg border border-surface-container">
+        <div className="relative overflow-hidden rounded-xl bg-surface-container-low p-space-md sm:p-space-lg border border-surface-container pr-12">
           <div className="absolute -right-16 -top-16 w-72 h-72 rounded-full bg-gradient-to-br from-primary-fixed-dim/30 via-secondary-fixed/20 to-transparent blur-2xl pointer-events-none"></div>
 
           <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-space-md">
@@ -142,14 +152,6 @@ export default function GrievancesModal({ isOpen, onClose, userProfile, onTicket
                   <span className="font-label-sm text-label-sm text-on-surface-variant">Active Neutral Desk</span>
                 </div>
               </div>
-
-              <button
-                type="button"
-                onClick={onClose}
-                className="w-8 h-8 rounded-lg hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer ml-auto"
-              >
-                <span className="material-symbols-outlined text-[20px]">close</span>
-              </button>
             </div>
           </div>
 
