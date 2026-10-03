@@ -91,7 +91,7 @@ export default function InteractiveTicketCard({
         </div>
 
         {submittedTicket.offline_option && (
-          <div className="text-[11px] text-slate-300 bg-slate-900/40 p-2.5 rounded-lg border border-slate-700/50 flex items-start gap-2">
+          <div className="text-[11px] text-slate-300 bg-slate-900/40 p-2.5 rounded-lg border border-slate-700/50 flex items-start gap-2 mb-3">
             <MapPin className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
             <div>
               <strong className="text-slate-200">Offline Care Desk Option:</strong>
@@ -99,6 +99,17 @@ export default function InteractiveTicketCard({
             </div>
           </div>
         )}
+
+        <div className="pt-2 border-t border-emerald-500/20 flex items-center justify-between text-xs">
+          <span className="text-slate-400">Synced to your official Grievances record.</span>
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent('open_grievances_modal'))}
+            className="px-2.5 py-1 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-200 border border-emerald-500/30 font-semibold cursor-pointer transition"
+          >
+            View in Grievance Hub →
+          </button>
+        </div>
       </div>
     );
   }

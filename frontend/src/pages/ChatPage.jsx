@@ -79,6 +79,12 @@ export default function ChatPage() {
       }
     }
     loadHistory();
+
+    const handleOpenGrievances = () => setShowGrievanceModal(true);
+    window.addEventListener('open_grievances_modal', handleOpenGrievances);
+    return () => {
+      window.removeEventListener('open_grievances_modal', handleOpenGrievances);
+    };
   }, []);
 
   // Auto scroll to bottom
