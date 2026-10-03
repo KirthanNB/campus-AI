@@ -335,9 +335,12 @@ HANDLING TIMETABLE & CAMPUS NEWS INQUIRIES:
 - Ground schedule queries in their branch/year timetable from the Official Institutional Records.
 - Ground announcements in the Live Campus Announcements & Circulars.
 
-CITATION REQUIREMENT:
-At the very end of your response on a new line, append the exact document filename citation from the provided Official Institutional Records:
+CITATION RULES (CRITICAL):
+- ONLY cite a source filename if your answer is directly derived from one of the documents in the "Official Institutional Records (Knowledge Base)" section (such as university regulations, examination policies, syllabus details, fee deadlines, hostel rules, or placement criteria).
+- If citing, format at the very end of your response on a new line:
 `🏷️ Source: [filename.md]`
+- If your answer is derived from the student's personal records (e.g. Live Student Attendance Records, Grievance Tickets, Profile context), OR if the query is a greeting or general conversational query: DO NOT append any source line, or output `🏷️ Source: None`.
+- STRICTLY DO NOT cite a syllabus document or unrelated document when answering attendance percentages, safe bunk calculations, grievance tickets, or student profile queries.
 
 Student Profile Context:
 - Student Name: {user_name}
@@ -370,7 +373,7 @@ Official Institutional Records (Knowledge Base):
     try:
         raw_response = await invoke_llm_with_fallback(prompt, query)
         
-        # Parse citation if Gemini determined this was an academic/institutional query
+        # Parse citation only if Gemini explicitly cited an official knowledge base record
         extracted_source = ""
         clean_answer = raw_response.strip()
 
@@ -379,14 +382,16 @@ Official Institutional Records (Knowledge Base):
         match = re.search(source_pattern, clean_answer, re.IGNORECASE | re.MULTILINE)
         
         if match:
-            extracted_source = match.group(1).strip().strip("[]*`")
-            # If extracted source doesn't end with .md, add it
-            if extracted_source and not extracted_source.endswith(".md"):
-                extracted_source += ".md"
+            raw_src = match.group(1).strip().strip("[]*`")
+            # Clean the source line from the visible answer text
+            clean_answer = re.sub(source_pattern, '', clean_answer, flags=re.IGNORECASE | re.MULTILINE).strip()
 
-        # Verify extracted source exists on disk; if not, fallback to retrieved source
-        if not extracted_source or not (kb_dir / extracted_source).exists():
-            extracted_source = fallback_source
+            if raw_src and raw_src.lower() not in ["none", "n/a", "null", "no document", "erp", "attendance record", "live attendance", "system"]:
+                if not raw_src.endswith(".md"):
+                    raw_src += ".md"
+                # Validate that this document actually exists and was part of the retrieved knowledge
+                if (kb_dir / raw_src).exists() and raw_src in sources_set:
+                    extracted_source = raw_src
         
         return {
             "answer": clean_answer,
@@ -402,3 +407,4 @@ Official Institutional Records (Knowledge Base):
             "branch": user_branch,
             "year": user_year
         }
+
