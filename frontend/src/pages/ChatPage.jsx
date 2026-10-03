@@ -36,9 +36,22 @@ export default function ChatPage() {
   const [isListening, setIsListening] = useState(false);
   const [attendanceSummary, setAttendanceSummary] = useState(null);
   const [openTicketsCount, setOpenTicketsCount] = useState(0);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileMenuRef = useRef(null);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+
+  // Click outside to close profile card
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Keyboard shortcut listener (Cmd/Ctrl + K for new chat, Esc to clear)
   useEffect(() => {
@@ -518,10 +531,10 @@ export default function ChatPage() {
           )}
         </div>
 
-        {/* Sidebar Bottom: Multilingual Selector & Sign Out */}
-        <div className={`${sidebarOpen ? 'p-space-md' : 'p-space-xs flex flex-col items-center'} mt-space-md bg-surface-container-lowest border-t border-surface-container`}>
-          {sidebarOpen && (
-            <div className="flex items-center justify-between mb-space-sm px-space-xs">
+        {/* Sidebar Bottom: Multilingual Selector */}
+        {sidebarOpen && (
+          <div className="p-space-md mt-space-md bg-surface-container-lowest border-t border-surface-container">
+            <div className="flex items-center justify-between px-space-xs">
               <div className="flex items-center gap-space-xs text-on-surface-variant">
                 <span className="material-symbols-outlined text-[16px]">translate</span>
                 <span className="font-label-sm text-label-sm font-medium">Language</span>
@@ -540,23 +553,8 @@ export default function ChatPage() {
                 <option value="German">German (Deutsch)</option>
               </select>
             </div>
-          )}
-
-          <button
-            type="button"
-            onClick={() => {
-              logout();
-              navigate('/auth', { replace: true });
-            }}
-            title={!sidebarOpen ? "Sign Out" : undefined}
-            className={`flex items-center justify-center gap-space-xs rounded-xl text-error hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors cursor-pointer ${
-              sidebarOpen ? 'w-full py-space-sm' : 'w-10 h-10 p-0'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[20px]">logout</span>
-            {sidebarOpen && <span className="font-label-md text-label-md font-semibold">Sign Out</span>}
-          </button>
-        </div>
+          </div>
+        )}
       </aside>
 
       {/* 2. MAIN WORKSPACE CONTAINER */}
@@ -585,11 +583,6 @@ export default function ChatPage() {
             <span className="font-headline-sm text-headline-sm text-on-surface font-semibold hidden sm:inline">
               CampusMind AI
             </span>
-            <div className="h-4 w-px bg-outline-variant mx-space-xs hidden sm:block"></div>
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container text-primary font-label-sm text-label-sm font-semibold">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-              Neural Link Active
-            </div>
           </div>
 
           <div className="flex items-center gap-space-sm sm:gap-space-md">
@@ -610,9 +603,126 @@ export default function ChatPage() {
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-secondary"></span>
             </button>
 
-            <div className="w-9 h-9 rounded-xl bg-primary-container text-on-primary flex items-center justify-center font-label-md text-label-md font-semibold shadow-xs">
-              {studentInitials}
+            {/* Profile Avatar with Information Popover */}
+            <div className="relative" ref={profileMenuRef}>
+              <button
+                type="button"
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className="w-9 h-9 rounded-xl bg-primary-container text-on-primary flex items-center justify-center font-label-md text-label-md font-semibold shadow-xs hover:ring-2 hover:ring-primary/40 transition-all cursor-pointer"
+                title="View Student Profile"
+              >
+                {studentInitials}
+              </button>
+
+              {/* Basic Student Information Dropdown */}
+              <AnimatePresence>
+                {showProfileMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 mt-2 w-80 rounded-2xl bg-surface-container-lowest p-space-md shadow-2xl border border-surface-container z-50 flex flex-col space-y-space-sm"
+                  >
+                    <div className="flex items-center gap-space-sm pb-space-sm border-b border-surface-container">
+                      <div className="w-12 h-12 rounded-xl bg-primary-container text-on-primary flex items-center justify-center font-headline-md text-headline-md font-semibold shadow-xs shrink-0">
+                        {studentInitials}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-headline-sm text-headline-sm text-on-surface font-semibold truncate">
+                          {user?.full_name || 'Arjun Sharma'}
+                        </span>
+                        <span className="font-code-sm text-code-sm text-primary font-medium">
+                          {user?.student_id || '24CSE101'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Information Grid */}
+                    <div className="space-y-space-xs py-1">
+                      <div className="flex items-center justify-between py-1 px-2 rounded-lg bg-surface-container-low text-label-sm font-label-sm">
+                        <span className="text-on-surface-variant flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-[15px] text-primary">badge</span>
+                          Student ID
+                        </span>
+                        <span className="font-semibold text-on-surface font-mono">{user?.student_id || '24CSE101'}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between py-1 px-2 rounded-lg bg-surface-container-low text-label-sm font-label-sm">
+                        <span className="text-on-surface-variant flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-[15px] text-primary">school</span>
+                          Department
+                        </span>
+                        <span className="font-semibold text-on-surface">{user?.branch || 'Computer Science (CSE)'}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between py-1 px-2 rounded-lg bg-surface-container-low text-label-sm font-label-sm">
+                        <span className="text-on-surface-variant flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-[15px] text-primary">calendar_today</span>
+                          Academic Year
+                        </span>
+                        <span className="font-semibold text-on-surface">{user?.current_year || '1st'} Year • Sem 1</span>
+                      </div>
+
+                      <div className="flex items-center justify-between py-1 px-2 rounded-lg bg-surface-container-low text-label-sm font-label-sm">
+                        <span className="text-on-surface-variant flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-[15px] text-primary">mail</span>
+                          Email Address
+                        </span>
+                        <span className="font-medium text-on-surface truncate max-w-[150px]">{user?.email || 'student@university.edu'}</span>
+                      </div>
+                    </div>
+
+                    {/* Quick Profile Shortcuts */}
+                    <div className="pt-space-xs border-t border-surface-container flex flex-col gap-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowProfileMenu(false);
+                          setActiveModal('attendance');
+                        }}
+                        className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer text-label-sm font-label-sm"
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-[16px] text-tertiary-container">fact_check</span>
+                          View Attendance Record
+                        </span>
+                        <span className="text-tertiary-container font-semibold">{overallAttPct}%</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowProfileMenu(false);
+                          setActiveModal('timetable');
+                        }}
+                        className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer text-label-sm font-label-sm"
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-[16px] text-primary">calendar_month</span>
+                          View Daily Schedule
+                        </span>
+                        <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
+
+            {/* Logout Button at Far Right Corner of Top Bar */}
+            <button
+              type="button"
+              onClick={() => {
+                logout();
+                navigate('/auth', { replace: true });
+              }}
+              title="Sign Out"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container-low hover:bg-rose-50 text-on-surface-variant hover:text-error border border-surface-container hover:border-rose-200 transition-all cursor-pointer shadow-2xs group"
+            >
+              <span className="material-symbols-outlined text-[18px] group-hover:text-error transition-colors">logout</span>
+              <span className="hidden sm:inline font-label-md text-label-md font-medium group-hover:text-error">Sign Out</span>
+            </button>
           </div>
         </header>
 
