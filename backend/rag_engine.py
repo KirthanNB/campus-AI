@@ -34,14 +34,13 @@ CHROMA_DIR = BASE_DIR / "backend" / "chroma_db"
 COLLECTION_NAME = "campusmind_knowledge"
 PRIMARY_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
-# Seamless fallback hierarchy across verified active Gemini models
+# Fast, low-latency Gemini model hierarchy
 MODEL_HIERARCHY = [
+    "gemini-3.5-flash-lite",
     PRIMARY_MODEL,
     "gemini-2.5-flash",
-    "gemini-3.7-flash",
-    "gemini-3.5-flash-lite",
     "gemini-3.1-flash-lite",
-    "gemini-3.1-pro-preview",
+    "gemini-3.7-flash",
 ]
 
 _retrieval_cache = {}  # In-memory LRU cache for repeat queries

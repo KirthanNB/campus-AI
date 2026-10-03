@@ -190,16 +190,16 @@ export default function ChatPage() {
         preferredLanguage === 'Hindi'
           ? 'hi-IN'
           : preferredLanguage === 'Tamil'
-          ? 'ta-IN'
-          : preferredLanguage === 'Telugu'
-          ? 'te-IN'
-          : preferredLanguage === 'French'
-          ? 'fr-FR'
-          : preferredLanguage === 'German'
-          ? 'de-DE'
-          : preferredLanguage === 'Spanish'
-          ? 'es-ES'
-          : 'en-US';
+            ? 'ta-IN'
+            : preferredLanguage === 'Telugu'
+              ? 'te-IN'
+              : preferredLanguage === 'French'
+                ? 'fr-FR'
+                : preferredLanguage === 'German'
+                  ? 'de-DE'
+                  : preferredLanguage === 'Spanish'
+                    ? 'es-ES'
+                    : 'en-US';
       recognition.interimResults = false;
 
       recognition.onstart = () => setIsListening(true);
@@ -243,15 +243,43 @@ export default function ChatPage() {
         loadSessions();
       }
 
-      // Append assistant message
-      const assistantMsg = {
-        id: `ai_${Date.now()}`,
+      // Progressive typewriter streaming over ~1s for natural AI response experience
+      const fullText = res.answer || '';
+      const totalSteps = 25; // 25 chunks over 1000ms (~40ms per step)
+      const stepDuration = 40;
+      const chunkSize = Math.max(1, Math.ceil(fullText.length / totalSteps));
+      const aiMsgId = `ai_${Date.now()}`;
+
+      let currentLength = chunkSize;
+      const initialAssistantMsg = {
+        id: aiMsgId,
         role: 'assistant',
-        content: res.answer,
+        content: fullText.slice(0, currentLength),
         source: res.source,
         created_at: new Date().toISOString(),
       };
-      setMessages((prev) => [...prev, assistantMsg]);
+      setMessages((prev) => [...prev, initialAssistantMsg]);
+
+      // Stream remaining text smoothly
+      if (currentLength < fullText.length) {
+        await new Promise((resolve) => {
+          const streamInterval = setInterval(() => {
+            currentLength += chunkSize;
+            if (currentLength >= fullText.length) {
+              clearInterval(streamInterval);
+              setMessages((prev) =>
+                prev.map((m) => (m.id === aiMsgId ? { ...m, content: fullText } : m))
+              );
+              resolve();
+            } else {
+              const partial = fullText.slice(0, currentLength);
+              setMessages((prev) =>
+                prev.map((m) => (m.id === aiMsgId ? { ...m, content: partial } : m))
+              );
+            }
+          }, stepDuration);
+        });
+      }
     } catch (err) {
       console.error('Chat error:', err);
       const errorMsg = {
@@ -281,11 +309,11 @@ export default function ChatPage() {
   // Student initials
   const studentInitials = user?.full_name
     ? user.full_name
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .slice(0, 2)
-        .toUpperCase()
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase()
     : 'AS';
 
   const overallAttPct = attendanceSummary?.overall_percentage || '83.2';
@@ -294,15 +322,13 @@ export default function ChatPage() {
     <div className="min-h-screen bg-background text-on-surface flex overflow-hidden">
       {/* 1. COLLAPSIBLE LEFT SIDEBAR */}
       <aside
-        className={`fixed left-0 top-0 h-screen bg-surface-container-lowest z-50 flex flex-col justify-between overflow-y-auto transition-all duration-300 border-r border-surface-container shadow-xs ${
-          sidebarOpen ? 'w-72 translate-x-0' : 'w-0 -translate-x-full lg:w-20 lg:translate-x-0'
-        }`}
+        className={`fixed left-0 top-0 h-screen bg-surface-container-lowest z-50 flex flex-col justify-between overflow-y-auto transition-all duration-300 border-r border-surface-container shadow-xs ${sidebarOpen ? 'w-72 translate-x-0' : 'w-0 -translate-x-full lg:w-20 lg:translate-x-0'
+          }`}
       >
         <div className="flex flex-col">
           {/* Sidebar Top Branding & Collapse Button */}
-          <div className={`p-space-md flex items-center border-b border-surface-container ${
-            sidebarOpen ? 'justify-between' : 'justify-center gap-space-xs'
-          }`}>
+          <div className={`p-space-md flex items-center border-b border-surface-container ${sidebarOpen ? 'justify-between' : 'justify-center gap-space-xs'
+            }`}>
             <div className="flex items-center gap-space-sm overflow-hidden">
               <BrandLogo className="w-8 h-8 shrink-0" />
               {sidebarOpen && (
@@ -311,7 +337,7 @@ export default function ChatPage() {
                     CampusMind
                   </span>
                   <span className="font-label-sm text-label-sm text-primary leading-tight tracking-wider uppercase text-[10px] font-semibold">
-                    Copilot v2.4
+                    Copilot
                   </span>
                 </div>
               )}
@@ -329,9 +355,8 @@ export default function ChatPage() {
 
           {/* Student Profile Identity Card */}
           <div className={`${sidebarOpen ? 'px-space-md' : 'px-space-xs flex justify-center'} mt-space-sm mb-space-sm`}>
-            <div className={`rounded-xl bg-surface-container-low border border-surface-container flex items-center overflow-hidden ${
-              sidebarOpen ? 'p-space-sm gap-space-sm w-full' : 'p-1.5 justify-center'
-            }`}>
+            <div className={`rounded-xl bg-surface-container-low border border-surface-container flex items-center overflow-hidden ${sidebarOpen ? 'p-space-sm gap-space-sm w-full' : 'p-1.5 justify-center'
+              }`}>
               <div className="w-9 h-9 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-md text-label-md font-semibold shrink-0 shadow-2xs">
                 {studentInitials}
               </div>
@@ -354,11 +379,10 @@ export default function ChatPage() {
               type="button"
               onClick={() => handleNewChat(true)}
               title={!sidebarOpen ? "New Copilot Chat (⌘K)" : undefined}
-              className={`flex items-center rounded-xl bg-primary-container text-on-primary hover:bg-primary transition-all shadow-md cursor-pointer active:scale-98 ${
-                sidebarOpen
+              className={`flex items-center rounded-xl bg-primary-container text-on-primary hover:bg-primary transition-all shadow-md cursor-pointer active:scale-98 ${sidebarOpen
                   ? 'w-full justify-between px-space-md py-space-sm'
                   : 'w-10 h-10 justify-center p-0'
-              }`}
+                }`}
             >
               <span className="flex items-center justify-center gap-space-xs font-label-md text-label-md font-semibold">
                 <span className="material-symbols-outlined text-[20px]">add</span>
@@ -385,13 +409,12 @@ export default function ChatPage() {
             {/* Active Copilot */}
             <button
               type="button"
-              onClick={() => {}}
+              onClick={() => { }}
               title={!sidebarOpen ? "Active Copilot" : undefined}
-              className={`flex items-center rounded-lg transition-colors bg-surface-container text-primary font-semibold cursor-pointer ${
-                sidebarOpen
+              className={`flex items-center rounded-lg transition-colors bg-surface-container text-primary font-semibold cursor-pointer ${sidebarOpen
                   ? 'justify-between px-space-sm py-2 w-full'
                   : 'justify-center w-10 h-10 p-0'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-center gap-space-sm">
                 <span className="material-symbols-outlined text-[20px]">neurology</span>
@@ -404,11 +427,10 @@ export default function ChatPage() {
               type="button"
               onClick={() => setActiveModal('attendance')}
               title={!sidebarOpen ? `Course Attendance (${overallAttPct}%)` : undefined}
-              className={`flex items-center rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors cursor-pointer ${
-                sidebarOpen
+              className={`flex items-center rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors cursor-pointer ${sidebarOpen
                   ? 'justify-between px-space-sm py-2 w-full'
                   : 'justify-center w-10 h-10 p-0'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-center gap-space-sm">
                 <span className="material-symbols-outlined text-[20px] text-tertiary-container">fact_check</span>
@@ -427,11 +449,10 @@ export default function ChatPage() {
               type="button"
               onClick={() => setActiveModal('timetable')}
               title={!sidebarOpen ? "Timetable & Schedule" : undefined}
-              className={`flex items-center rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors cursor-pointer ${
-                sidebarOpen
+              className={`flex items-center rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors cursor-pointer ${sidebarOpen
                   ? 'justify-between px-space-sm py-2 w-full'
                   : 'justify-center w-10 h-10 p-0'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-center gap-space-sm">
                 <span className="material-symbols-outlined text-[20px] text-primary">calendar_today</span>
@@ -444,11 +465,10 @@ export default function ChatPage() {
               type="button"
               onClick={() => setActiveModal('grievance')}
               title={!sidebarOpen ? `Student Grievances (${openTicketsCount} Open)` : undefined}
-              className={`flex items-center rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors cursor-pointer ${
-                sidebarOpen
+              className={`flex items-center rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors cursor-pointer ${sidebarOpen
                   ? 'justify-between px-space-sm py-2 w-full'
                   : 'justify-center w-10 h-10 p-0'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-center gap-space-sm">
                 <span className="material-symbols-outlined text-[20px] text-secondary">support_agent</span>
@@ -466,11 +486,10 @@ export default function ChatPage() {
               type="button"
               onClick={() => setActiveModal('news')}
               title={!sidebarOpen ? "Campus Circulars" : undefined}
-              className={`flex items-center rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors cursor-pointer ${
-                sidebarOpen
+              className={`flex items-center rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors cursor-pointer ${sidebarOpen
                   ? 'justify-between px-space-sm py-2 w-full'
                   : 'justify-center w-10 h-10 p-0'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-center gap-space-sm">
                 <span className="material-symbols-outlined text-[20px] text-primary-container">campaign</span>
@@ -503,11 +522,10 @@ export default function ChatPage() {
                   <div
                     key={s.id}
                     onClick={() => selectSession(s.id, s.title)}
-                    className={`group flex items-center justify-between gap-space-xs px-space-sm py-1.5 rounded-lg transition-colors cursor-pointer ${
-                      activeSessionId === s.id
+                    className={`group flex items-center justify-between gap-space-xs px-space-sm py-1.5 rounded-lg transition-colors cursor-pointer ${activeSessionId === s.id
                         ? 'bg-surface-container text-primary font-medium'
                         : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-space-xs truncate">
                       <span className="material-symbols-outlined text-[16px] text-outline shrink-0">
@@ -559,15 +577,13 @@ export default function ChatPage() {
 
       {/* 2. MAIN WORKSPACE CONTAINER */}
       <div
-        className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${
-          sidebarOpen ? 'lg:pl-72' : 'lg:pl-20'
-        }`}
+        className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? 'lg:pl-72' : 'lg:pl-20'
+          }`}
       >
         {/* Top Header Bar */}
         <header
-          className={`fixed top-0 right-0 h-16 bg-surface-container-lowest/80 backdrop-blur-xl border-b border-surface-container shadow-2xs z-40 flex items-center justify-between px-space-md transition-all duration-300 ${
-            sidebarOpen ? 'left-0 lg:left-72' : 'left-0 lg:left-20'
-          }`}
+          className={`fixed top-0 right-0 h-16 bg-surface-container-lowest/80 backdrop-blur-xl border-b border-surface-container shadow-2xs z-40 flex items-center justify-between px-space-md transition-all duration-300 ${sidebarOpen ? 'left-0 lg:left-72' : 'left-0 lg:left-20'
+            }`}
         >
           <div className="flex items-center gap-space-sm">
             {/* Mobile Sidebar Toggle */}
@@ -873,9 +889,6 @@ export default function ChatPage() {
                         <span className="font-headline-sm text-headline-sm text-on-surface font-semibold">
                           Institutional Guidance
                         </span>
-                        <span className="px-2 py-0.5 rounded-full bg-surface-container text-primary font-code-sm text-code-sm font-medium">
-                          Confidence 99.8%
-                        </span>
                       </div>
 
                       <div className="flex items-center gap-1 text-on-surface-variant">
@@ -952,20 +965,15 @@ export default function ChatPage() {
 
         {/* 4. BOTTOM FLOATING PROMPT INPUT BAR */}
         <div
-          className={`fixed bottom-0 right-0 bg-gradient-to-t from-background via-background/95 to-transparent pt-6 pb-space-md px-space-md z-40 transition-all duration-300 ${
-            sidebarOpen ? 'left-0 lg:left-72' : 'left-0 lg:left-20'
-          }`}
+          className={`fixed bottom-0 right-0 bg-gradient-to-t from-background via-background/95 to-transparent pt-6 pb-space-md px-space-md z-40 transition-all duration-300 ${sidebarOpen ? 'left-0 lg:left-72' : 'left-0 lg:left-20'
+            }`}
         >
           <div className="max-w-4xl mx-auto flex flex-col space-y-space-xs">
             {/* Meta Context Pill */}
             <div className="flex items-center justify-between px-space-xs">
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-label-sm text-label-sm font-semibold flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[13px]">bolt</span>
-                  {user?.full_name?.split(' ')[0] || 'Student'} ({user?.current_year || '1st Yr'} {user?.branch || 'CSE'}) Context Attached
-                </span>
-                <span className="hidden sm:inline font-body-sm text-body-sm text-on-surface-variant">
-                  • Roll: {user?.student_id || '24CSE101'}
+                <span className="hidden sm:inline font-code-sm text-code-sm text-on-surface-variant">
+                  Roll: {user?.student_id || '24CSE101'}
                 </span>
                 {preferredLanguage !== 'English' && (
                   <span className="px-2 py-0.5 rounded-full bg-secondary/10 text-secondary font-label-sm text-label-sm font-semibold">
@@ -992,11 +1000,10 @@ export default function ChatPage() {
               <button
                 type="button"
                 onClick={handleToggleVoice}
-                className={`w-8 h-8 rounded-full transition-colors flex items-center justify-center cursor-pointer ${
-                  isListening
+                className={`w-8 h-8 rounded-full transition-colors flex items-center justify-center cursor-pointer ${isListening
                     ? 'bg-rose-500 text-white animate-pulse'
                     : 'text-on-surface-variant hover:text-primary hover:bg-surface-container'
-                }`}
+                  }`}
                 title="Voice Query"
               >
                 <span className="material-symbols-outlined text-[20px]">mic</span>
