@@ -886,11 +886,9 @@ export default function ChatPage() {
             const parsedTitle = actionMatch?.[2]?.trim() || '';
             const parsedDesc = actionMatch?.[3]?.trim() || '';
 
-            const hasTicketIntent =
-              Boolean(actionMatch) ||
-              msg.content.toLowerCase().includes('ticket') ||
-              msg.content.toLowerCase().includes('grievance') ||
-              msg.content.toLowerCase().includes('complaint');
+            // Only show InteractiveTicketCard if Gemini explicitly triggered ACTION:SHOW_COMPLAINT_FORM
+            // OR if the conversation specifically asks to file a new complaint/grievance
+            const hasTicketIntent = Boolean(actionMatch);
 
             return (
               <div key={msg.id || index} className="flex items-start gap-space-md max-w-4xl">
