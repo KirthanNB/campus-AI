@@ -4,7 +4,7 @@
  */
 
 const rawBase = (import.meta.env.VITE_API_BASE || '').trim().replace(/\/+$/, '');
-const API_BASE = rawBase ? (rawBase.endsWith('/api') ? rawBase : `${rawBase}/api`) : '/api';
+export const API_BASE = rawBase ? (rawBase.endsWith('/api') ? rawBase : `${rawBase}/api`) : '/api';
 
 function getAuthHeaders() {
   const token = localStorage.getItem('campusmind_token');

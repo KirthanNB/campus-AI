@@ -1,19 +1,21 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { API_BASE } from '../services/api';
 
 export default function CitationModal({ isOpen, onClose, citationData }) {
   if (!isOpen || !citationData) return null;
 
-  const docName = citationData.document || citationData.source || 'academic_regulations_2024.pdf';
+  const docName = citationData.document || citationData.source || 'academic_policies_and_attendance.md';
   const cleanDocName = docName.replace(/^\[+|\]+$/g, '').trim();
-  const clause = citationData.clause || 'Clause 4.2: Mandatory Attendance & Exemption';
+  const clause = citationData.clause || 'Official Academic Policy & Syllabus Record';
   const excerpt =
     citationData.excerpt ||
     citationData.text ||
-    '"Every student is mandatorily required to register a minimum attendance of 75.00% across all lecture and practical slots in each course to be considered eligible for the End-Semester Examination. A condonation of up to 5% may only be granted on authenticated medical grounds with Dean (Academic) sanction."';
+    '"Official verified clause extracted directly from university knowledge repository."';
 
   const handleOpenViewer = () => {
-    window.open(`/api/documents/view/${encodeURIComponent(cleanDocName)}`, '_blank');
+    const viewerUrl = `${API_BASE}/documents/view/${encodeURIComponent(cleanDocName)}`;
+    window.open(viewerUrl, '_blank');
   };
 
   return (
