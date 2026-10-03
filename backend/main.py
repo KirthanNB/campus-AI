@@ -488,7 +488,7 @@ def clear_chat_history(
 
 @app.get("/api/student/attendance")
 def get_student_attendance(current_user: User = Depends(get_current_user)):
-    """Returns dynamic subject attendance, percentages, and bunk margins for logged in student."""
+    """Returns dynamic subject attendance, percentages, and eligibility status for logged in student."""
     return get_student_attendance_summary(
         branch=current_user.branch,
         current_year=current_user.current_year,

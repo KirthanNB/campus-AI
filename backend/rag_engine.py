@@ -244,7 +244,7 @@ async def generate_rag_response(
     for sub in sub_records:
         attendance_lines.append(
             f"- [{sub['code']}] {sub['title']}: {sub['attended']}/{sub['total_conducted']} attended ({sub['percentage']}%) | "
-            f"Status: {sub['status']} | Safe Bunks: {sub['safe_bunk_margin']} class(es) | {sub['margin_summary']} | Faculty: {sub['faculty']}"
+            f"Status: {sub['status']} | {sub['margin_summary']} | Faculty: {sub['faculty']}"
         )
     attendance_context_str = "\n".join(attendance_lines) if sub_records else "Standard attendance records: Overall 83.2%."
 
@@ -294,7 +294,7 @@ You are STRICTLY AND EXCLUSIVELY an institutional university assistant. You must
 
 ALLOWED IN-SCOPE TOPICS:
 1. Academic timelines & Schedules: Exam schedules (CAT-1, CAT-2, FAT finals, practical lab exams), subject timetables, curricula, courses, credits, and syllabus.
-2. Attendance & Bunk Margin Simulator: Current percentage per subject, safe bunk margin calculations, classes needed to reach 75%, condonation rules (65%-74%), and overall attendance.
+2. Attendance & Exam Eligibility Tracking: Current percentage per subject, mandatory 75% threshold verification, classes needed to reach 75% if below, condonation rules (65%-74%), and overall attendance status.
 3. Financial matters: Tuition fees, lab consumables, admission deposits, payment installments, late fee deadlines.
 4. Residential & campus life: Hostel block rules, gate curfew timings (10:00 PM / 10:30 PM), mess operational hours (breakfast, lunch, snacks, dinner), food menu, and campus access for day scholars.
 5. Career & placements: Eligibility criteria (6.5 CGPA, zero backlogs), company tiers (Standard, Dream, Super Dream), and final year capstone internships.
@@ -309,18 +309,19 @@ If the user asks questions or gives prompts that are UNRELATED to campus life or
 -> Example decline: "I'm CampusMind AI, your dedicated university assistant. I am designed exclusively to help with campus and academic matters—such as your syllabus, exam dates, fee structures, hostel rules, attendance policies, or filing student grievances. How can I assist you with your college studies or campus life today?"
 -> Do NOT fulfill the off-topic request (do NOT tell jokes, do NOT answer general trivia). Do NOT cite any document source for off-topic declines.
 
-HANDLING ATTENDANCE CALCULATIONS & BUNK MARGIN INQUIRIES:
-- When a student asks about their attendance in a subject or asks "Can I skip/bunk X classes and still have 75%?":
-  1. Look at their Live Attendance Record for that specific subject (e.g. Attended: A, Total Conducted: T).
-  2. If they ask about skipping K classes:
-     - New Total Conducted = Total + K.
-     - New Percentage = (Attended / (Total + K)) * 100.
-     - If New Percentage >= 75%: State clearly "You can safely miss K class(es). Your attendance will be [Attended]/[New Total] ([New Percentage]%), which is safely above 75%." Mention how many additional safe skips they have left.
-     - If New Percentage < 75%: State clearly "Warning: If you miss K class(es), your attendance drops to [Attended]/[New Total] ([New Percentage]%), which is BELOW the 75% mandatory threshold."
-  3. If a subject is below 75% and they ask how many classes they need to attend:
-     - Classes to attend without missing = max(0, 3*Total - 4*Attended).
-     - Explain clearly: "You need to attend the next [X] consecutive classes to cross 75%."
-  4. Always present attendance breakdowns clearly with bold numbers, subject codes, and supportive advice.
+POSITIVE ATTENDANCE & ACADEMIC ELIGIBILITY GUIDANCE (CRITICAL - ZERO BUNK MENTIONS):
+- DO NOT encourage, suggest, calculate, or mention "bunk", "bunking", "skipping classes", or "safe bunks".
+- Always maintain an encouraging, positive, and constructive academic tone focused on meeting and maintaining university attendance requirements.
+- When a student asks about their attendance in a subject or asks if they are eligible:
+  1. State their current attendance clearly: [Attended] out of [Total Conducted] classes ([Percentage]%).
+  2. If their attendance is >= 75%:
+     - State positively that they are in Good Standing and fully Eligible for end-semester examinations.
+     - DO NOT mention how many classes they can skip or bunk. Emphasize maintaining their regular attendance.
+  3. If their attendance is below 75%:
+     - Calculate how many consecutive classes they must attend: Classes needed = max(0, 3*Total - 4*Attended).
+     - State constructively: "Your current attendance is [Percentage]%. To reach the mandatory 75% threshold, you need to attend the next [X] consecutive classes without absence."
+     - Mention the condonation bracket (65%-74.9% with medical documentation) if applicable.
+  4. NEVER use the words "bunk", "safe bunks", or "safe margin to miss". Always frame guidance around academic diligence, exam eligibility, and classes needed to achieve 75%.
 
 HANDLING GRIEVANCES & TICKET STATUS INQUIRIES:
 - If the student asks about the status of their filed complaints or maintenance tickets:
@@ -340,7 +341,7 @@ CITATION RULES (CRITICAL):
 - If citing, format at the very end of your response on a new line:
 `🏷️ Source: [filename.md]`
 - If your answer is derived from the student's personal records (e.g. Live Student Attendance Records, Grievance Tickets, Profile context), OR if the query is a greeting or general conversational query: DO NOT append any source line, or output `🏷️ Source: None`.
-- STRICTLY DO NOT cite a syllabus document or unrelated document when answering attendance percentages, safe bunk calculations, grievance tickets, or student profile queries.
+- STRICTLY DO NOT cite a syllabus document or unrelated document when answering attendance percentages, course eligibility, grievance tickets, or student profile queries.
 
 Student Profile Context:
 - Student Name: {user_name}
@@ -392,7 +393,15 @@ Official Institutional Records (Knowledge Base):
                 # Validate that this document actually exists and was part of the retrieved knowledge
                 if (kb_dir / raw_src).exists() and raw_src in sources_set:
                     extracted_source = raw_src
-        
+
+        # Post-processing: Strictly remove any bunk or safe bunk lines
+        sanitized_lines = []
+        for line in clean_answer.split("\n"):
+            if re.search(r'\bbunk(s|ing)?\b', line, re.IGNORECASE):
+                continue
+            sanitized_lines.append(line)
+        clean_answer = "\n".join(sanitized_lines).strip()
+
         return {
             "answer": clean_answer,
             "source": extracted_source,

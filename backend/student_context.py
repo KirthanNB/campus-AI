@@ -260,18 +260,15 @@ def get_student_attendance_summary(branch: str, current_year: str, student_id: s
         total_attended += att
         total_conducted += tot
 
-        # Safe bunks calculation: (4*A - 3*T) // 3
-        safe_bunks = (4 * att - 3 * tot) // 3
-        
         # Classes needed to reach 75%: 3*T - 4*A
         classes_needed_75 = max(0, 3 * tot - 4 * att)
 
         if pct >= 75.0:
             status = "Eligible"
-            margin_text = f"Can safely miss {safe_bunks} class(es)" if safe_bunks > 0 else "Borderline (Cannot miss any classes)"
+            margin_text = "Meeting mandatory 75% requirement (Eligible for exams)"
         elif pct >= 65.0:
             status = "Condonation Required (65-74%)"
-            margin_text = f"Below 75%! Must attend next {classes_needed_75} class(es) without absence"
+            margin_text = f"Below 75%! Must attend next {classes_needed_75} class(es) without absence to reach 75%"
         else:
             status = "Critical Shortage (<65%)"
             margin_text = f"Critical! Must attend next {classes_needed_75} class(es) to reach 75%"
@@ -283,7 +280,6 @@ def get_student_attendance_summary(branch: str, current_year: str, student_id: s
             "total_conducted": tot,
             "percentage": pct,
             "status": status,
-            "safe_bunk_margin": max(0, safe_bunks),
             "classes_needed_for_75": classes_needed_75,
             "margin_summary": margin_text,
             "faculty": sub.get("faculty", "Course Faculty"),
