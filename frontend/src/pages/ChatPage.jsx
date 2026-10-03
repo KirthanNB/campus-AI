@@ -990,15 +990,6 @@ export default function ChatPage() {
             <div className="bg-surface-container-lowest/95 backdrop-blur-md rounded-full px-space-md py-2 flex items-center gap-space-sm shadow-xl border border-surface-container">
               <button
                 type="button"
-                onClick={() => setActiveModal('news')}
-                className="w-8 h-8 rounded-full text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors flex items-center justify-center cursor-pointer"
-                title="View Circulars"
-              >
-                <span className="material-symbols-outlined text-[20px]">attach_file</span>
-              </button>
-
-              <button
-                type="button"
                 onClick={handleToggleVoice}
                 className={`w-8 h-8 rounded-full transition-colors flex items-center justify-center cursor-pointer ${isListening
                     ? 'bg-rose-500 text-white animate-pulse'
