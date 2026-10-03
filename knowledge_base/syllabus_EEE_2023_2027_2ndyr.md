@@ -1,0 +1,40 @@
+---
+{
+  "title": "EEE 2nd Year Syllabus (2023-2027 Batch)",
+  "branch": "EEE",
+  "batch": "2023-2027",
+  "year": "2nd",
+  "doc_type": "syllabus",
+  "applicable_to": "EEE"
+}
+---
+
+# Department of Electrical and Electronics Engineering (EEE)
+## Curriculum & Syllabus - Year: 2nd Year | Batch: 2023-2027
+**Curriculum Version:** v2.1 (AY2023-24 revision)
+**Total Degree Minimum Credits:** 164 Credits
+**Year Focus:** 2nd Year Core & Professional Foundations
+
+### Mandatory Core Subjects for 2nd Year EEE:
+- **EEE2001: Electrical Machines - I (Transformers & DC Machines)** | Credits: 4 | Status: Mandatory Core
+- **EEE2004: Analog Electronics & Linear Integrated Circuits** | Credits: 4 | Status: Mandatory Core
+- **EEE2006: Electrical Machines - II (Induction & Synchronous)** | Credits: 4 | Status: Mandatory Core
+
+### Specialization Elective Baskets Available for EEE:
+Students must earn specialized elective credits from the following official departmental baskets:
+- Renewable Energy Systems (Solar PV Engineering, Wind Turbine Systems, Grid Integration)
+- Electric Vehicle Systems (Battery Management Systems, EV Motor Drives, Fast Charging Infrastructure)
+- Smart Grids & Automation (SCADA, Energy Internet, Microgrid Protection)
+- High Voltage Engineering (Insulation Technology, Overvoltage Transients, Switchgear)
+
+### Degree Completion Credit Breakdown (2023-2027 Scheme):
+- School Core Basket: 60 credits
+- Program Core Basket: 44 credits
+- Discipline & Specialized Electives: 42 credits
+- Open Electives: 18 credits
+- Total Minimum Credits to Graduate: 164 credits
+
+### Regulations & Special Instructions:
+- Minimum 75% attendance in theory and laboratory classes is strictly required to be eligible for end-semester examinations.
+- Non-credit mandatory courses include Environmental Studies (CHE1001) and Co-/Extra-curricular Activities (CEA1001).
+- For 2023-2027 batch, Capstone Project Phase-1 begins in the 7th Semester and Capstone Phase-2 / Full-time Internship is in the 8th Semester.
