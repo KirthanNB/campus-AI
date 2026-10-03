@@ -877,7 +877,17 @@ export default function ChatPage() {
 
             // Assistant Response
             const hasSource = Boolean(msg.source && msg.source.trim());
+            // Parse action tags like [ACTION:SHOW_COMPLAINT_FORM:Category|Title|Description]
+            const actionRegex = /\[ACTION:SHOW_COMPLAINT_FORM:([^\|\]]*)(?:\|([^\|\]]*))?(?:\|([^\]]*))?\]/i;
+            const actionMatch = msg.content.match(actionRegex);
+            const displayContent = msg.content.replace(actionRegex, '').trim();
+
+            const parsedCategory = actionMatch?.[1]?.trim() || (msg.content.toLowerCase().includes('academic') ? 'Academic Grievance' : 'Hostel Maintenance');
+            const parsedTitle = actionMatch?.[2]?.trim() || '';
+            const parsedDesc = actionMatch?.[3]?.trim() || '';
+
             const hasTicketIntent =
+              Boolean(actionMatch) ||
               msg.content.toLowerCase().includes('ticket') ||
               msg.content.toLowerCase().includes('grievance') ||
               msg.content.toLowerCase().includes('complaint');
@@ -901,7 +911,7 @@ export default function ChatPage() {
                       <div className="flex items-center gap-1 text-on-surface-variant">
                         <button
                           type="button"
-                          onClick={() => navigator.clipboard.writeText(msg.content)}
+                          onClick={() => navigator.clipboard.writeText(displayContent || msg.content)}
                           className="w-7 h-7 rounded hover:bg-surface-container flex items-center justify-center transition-colors cursor-pointer"
                           title="Copy response"
                         >
@@ -911,16 +921,23 @@ export default function ChatPage() {
                     </div>
 
                     {/* Markdown Body */}
-                    <div className="prose-chat font-body-md text-body-md text-on-surface leading-relaxed">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
-                    </div>
+                    {displayContent ? (
+                      <div className="prose-chat font-body-md text-body-md text-on-surface leading-relaxed">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayContent}</ReactMarkdown>
+                      </div>
+                    ) : (
+                      <div className="font-body-md text-body-md text-on-surface">
+                        I've prepared the official grievance filing form below with priority SLA routing. Please provide any additional details and click submit:
+                      </div>
+                    )}
 
                     {/* Interactive Ticket Quick-Action Card if applicable */}
                     {hasTicketIntent && (
                       <InteractiveTicketCard
                         userProfile={user}
-                        initialTitle="Hostel Infrastructure & Maintenance Issue"
-                        initialDescription="Wi-Fi packet drop / maintenance reported via Copilot"
+                        category={parsedCategory}
+                        initialTitle={parsedTitle || (parsedCategory === 'Academic Grievance' ? 'Academic Concern / Discrepancy' : 'Hostel & Campus Facility Issue')}
+                        initialDescription={parsedDesc}
                         onOpenGrievances={() => setActiveModal('grievance')}
                       />
                     )}

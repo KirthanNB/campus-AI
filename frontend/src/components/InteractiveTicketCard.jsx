@@ -99,55 +99,110 @@ export default function InteractiveTicketCard({
   }
 
   return (
-    <div className="rounded-xl bg-gradient-to-r from-surface-container to-surface-container-high p-space-md flex flex-col space-y-space-sm border border-surface-container shadow-inner">
-      <div className="flex items-start justify-between gap-space-sm">
+    <div className="rounded-xl bg-surface-container-low p-space-md sm:p-space-lg flex flex-col space-y-space-md border border-surface-container shadow-xs">
+      <div className="flex items-center justify-between pb-space-xs border-b border-surface-container">
         <div className="flex items-center gap-space-xs">
-          <div className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center text-on-secondary shrink-0">
-            <span className="material-symbols-outlined text-[16px]">priority_high</span>
+          <div className="w-8 h-8 rounded-lg bg-secondary-fixed flex items-center justify-center text-secondary">
+            <span className="material-symbols-outlined text-[18px]">support_agent</span>
           </div>
           <div>
             <h4 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-              Grievance Quick-Action Card
+              Instant Grievance Filing
             </h4>
-            <span className="font-body-sm text-body-sm text-on-surface-variant">
-              {title || `${ticketCategory} Issue`} • {userProfile?.hostel_status || 'Hostel Campus'}
+            <span className="font-label-sm text-label-sm text-on-surface-variant">
+              Direct Ombudsman Routing • 24h Mandatory SLA
             </span>
           </div>
         </div>
-        <span className="font-code-sm text-code-sm text-on-surface-variant shrink-0 bg-surface-container-lowest px-2 py-0.5 rounded">
-          SLA Monitored
+        <span className="font-code-sm text-code-sm px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-medium">
+          Priority Channel
         </span>
       </div>
 
-      {error && <div className="text-error font-body-sm text-body-sm">{error}</div>}
+      {error && (
+        <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-body-sm font-body-sm flex items-center gap-2">
+          <span className="material-symbols-outlined text-[16px]">error</span>
+          <span>{error}</span>
+        </div>
+      )}
 
-      <div className="flex flex-wrap items-center gap-space-sm pt-space-xs">
-        <button
-          type="button"
-          disabled={submitting}
-          onClick={handleEscalate}
-          className="px-space-md py-2 rounded-lg bg-secondary text-on-secondary hover:brightness-105 font-label-md text-label-md font-semibold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-50"
-        >
-          <span className="material-symbols-outlined text-[18px]">
-            {submitting ? 'sync' : 'bolt'}
-          </span>
-          <span>{submitting ? 'Escalating...' : 'Confirm & Escalate Priority'}</span>
-        </button>
+      {/* Form Fields */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
+        <div className="flex flex-col gap-1">
+          <label className="font-label-sm text-label-sm font-medium text-on-surface-variant">
+            Grievance Category
+          </label>
+          <select
+            value={ticketCategory}
+            onChange={(e) => setTicketCategory(e.target.value)}
+            className="w-full bg-surface-container-lowest text-on-surface font-body-sm text-body-sm rounded-lg px-3 py-2 outline-none border border-surface-container focus:border-secondary transition-colors"
+          >
+            <option value="Academic Grievance">Academic Grievance</option>
+            <option value="Hostel Maintenance">Hostel Maintenance</option>
+            <option value="Mess & Dining Food">Mess & Dining Food</option>
+            <option value="Fee & Accounts Cell">Fee & Accounts Cell</option>
+            <option value="Library Services">Library Services</option>
+            <option value="Campus Infrastructure">Campus Infrastructure</option>
+          </select>
+        </div>
 
-        <button
-          type="button"
-          onClick={handleResolve}
-          className="px-space-md py-2 rounded-lg bg-surface-container-lowest text-on-surface hover:bg-surface-container font-label-md text-label-md font-medium transition-colors shadow-2xs border border-surface-container cursor-pointer"
-        >
-          Mark as Resolved
-        </button>
+        <div className="flex flex-col gap-1">
+          <label className="font-label-sm text-label-sm font-medium text-on-surface-variant">
+            Issue Title / Subject
+          </label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g., Professor attendance discrepancy / Wi-Fi outage"
+            className="w-full bg-surface-container-lowest text-on-surface font-body-sm text-body-sm rounded-lg px-3 py-2 outline-none border border-surface-container focus:border-secondary transition-colors"
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label className="font-label-sm text-label-sm font-medium text-on-surface-variant">
+          Detailed Description & Urgency
+        </label>
+        <textarea
+          rows={2}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Briefly state your concern, affected course/faculty or room location..."
+          className="w-full bg-surface-container-lowest text-on-surface font-body-sm text-body-sm rounded-lg px-3 py-2 outline-none border border-surface-container focus:border-secondary transition-colors resize-none"
+        />
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex flex-wrap items-center justify-between gap-space-sm pt-space-xs">
+        <div className="flex items-center gap-space-sm">
+          <button
+            type="button"
+            disabled={submitting}
+            onClick={handleEscalate}
+            className="px-space-md py-2 rounded-lg bg-secondary text-on-secondary hover:brightness-105 font-label-md text-label-md font-semibold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-50"
+          >
+            <span className="material-symbols-outlined text-[18px]">
+              {submitting ? 'sync' : 'send'}
+            </span>
+            <span>{submitting ? 'Submitting...' : 'Submit Grievance Now'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleResolve}
+            className="px-space-md py-2 rounded-lg bg-surface-container-lowest text-on-surface hover:bg-surface-container font-label-md text-label-md font-medium transition-colors shadow-2xs border border-surface-container cursor-pointer"
+          >
+            Dismiss
+          </button>
+        </div>
 
         <button
           type="button"
           onClick={onOpenGrievances}
-          className="px-space-sm py-2 rounded-lg text-primary hover:bg-surface-container-low font-label-md text-label-md transition-colors ml-auto flex items-center gap-1 cursor-pointer"
+          className="text-primary hover:underline font-label-md text-label-md flex items-center gap-1 cursor-pointer"
         >
-          <span>Open Full Portal</span>
+          <span>Open Grievances Portal</span>
           <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
         </button>
       </div>
