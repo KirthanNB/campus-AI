@@ -607,7 +607,7 @@ hostel_doc = """# Campus Residential Life & Hostel Regulations
 - **Hostel Block In-Time (All Residents):** 10:00 PM strictly on weekdays (Monday to Friday).
 - **Weekend In-Time:** 10:30 PM on Saturdays and Sundays.
 - **Late Entry Rule:** Entry after curfew requires biometric logging and written approval from the Chief Warden. More than two late entries in a month attracts a penalty of ₹500 and parental notification.
-- **Day Scholar Campus Access:** Day Scholars must vacate campus premises by 09:30 PM unless holding special written permission for cultural festivals, hackathons, or project work.
+- **Day Scholar Campus Access:** Day Scholars must vacate campus premises by 09:30 PM unless holding special written permission for cultural festivals, academic workshops, or lab project work.
 
 ### 2. Dining Hall / Mess Schedule:
 Meals are served in both Block A and Block B dining halls during the following operational windows:
@@ -696,7 +696,7 @@ placement_doc = """# Career Development & Campus Placement Policy
 ### 1. Placement Eligibility Criteria:
 - **General Eligibility:** Minimum CGPA of 6.0 with no active standing backlogs at the time of the recruitment drive.
 - **Tier 1 / Product Companies (Dream Offer: CTC >= ₹10 LPA):** Minimum CGPA of 7.5 or above with strong competitive programming and system design track record.
-- **Super Dream Companies (CTC >= ₹18 LPA):** Minimum CGPA of 8.5, zero historical backlogs, and demonstrated project/hackathon achievements.
+- **Super Dream Companies (CTC >= ₹18 LPA):** Minimum CGPA of 8.5, zero historical backlogs, and demonstrated project/technical achievements.
 - **One Student - One Offer Policy:** Once a student receives a Dream offer (>= ₹10 LPA), they are eligible to apply only for Super Dream categories.
 
 ### 2. Capstone Project & 8th Semester Internship:

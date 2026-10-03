@@ -456,11 +456,11 @@ def get_campus_news_summary() -> List[Dict[str, Any]]:
         },
         {
             "id": 4,
-            "title": "GEARS 2026 Hackathon & Project Expo - Cash Prizes worth ₹5 Lakhs",
+            "title": "Annual Student Innovation & Project Expo - Cash Prizes worth ₹5 Lakhs",
             "category": "Events",
             "date": "Sep 28, 2026",
-            "summary": "Annual inter-college technology hackathon and AI copilot exhibition. Submit team proposals before Oct 15.",
-            "doc_ref": "gears_2026_hackathon_project_expo.md"
+            "summary": "Annual inter-college technology innovation and AI project exhibition. Submit team proposals before Oct 15.",
+            "doc_ref": "student_innovation_and_project_expo.md"
         },
         {
             "id": 5,

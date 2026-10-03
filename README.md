@@ -1,6 +1,5 @@
 # 🎓 CampusMind AI
 ### Hyper-Personalized, Multilingual AI Copilot for College Students
-*Built for the GEARS 2026 Hackathon*
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat&logo=react&logoColor=black)](https://react.dev)
@@ -279,4 +278,4 @@ campus-AI/
 
 ## 📄 License
 
-This project was developed for the **GEARS 2026 Hackathon**. Open sourced under the [MIT License](LICENSE).
+Open sourced under the [MIT License](LICENSE).

@@ -17,7 +17,7 @@ from backend.database import get_db
 from backend.models import User
 
 # JWT Configuration
-SECRET_KEY = os.getenv("JWT_SECRET", "campusmind_gears_2026_super_secret_jwt_key_987654321")
+SECRET_KEY = os.getenv("JWT_SECRET", "campusmind_production_secure_jwt_key_987654321")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))  # 24 hours
 

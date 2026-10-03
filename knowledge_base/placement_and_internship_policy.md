@@ -16,8 +16,7 @@
 
 ### 1. Placement Eligibility Criteria:
 - **General Eligibility:** Minimum CGPA of 6.0 with no active standing backlogs at the time of the recruitment drive.
-- **Tier 1 / Product Companies (Dream Offer: CTC >= ₹10 LPA):** Minimum CGPA of 7.5 or above with strong competitive programming and system design track record.
-- **Super Dream Companies (CTC >= ₹18 LPA):** Minimum CGPA of 8.5, zero historical backlogs, and demonstrated project/hackathon achievements.
+- **Super Dream Companies (CTC >= ₹18 LPA):** Minimum CGPA of 8.5, zero historical backlogs, and demonstrated project/technical achievements.
 - **One Student - One Offer Policy:** Once a student receives a Dream offer (>= ₹10 LPA), they are eligible to apply only for Super Dream categories.
 
 ### 2. Capstone Project & 8th Semester Internship:

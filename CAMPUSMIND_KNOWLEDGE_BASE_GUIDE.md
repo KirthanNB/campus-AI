@@ -1,7 +1,7 @@
-# 🎓 CampusMind AI — Complete Knowledge Base & Judge/Tester Guide
+# 🎓 CampusMind AI — Complete Knowledge Base & Architecture Guide
 
 > **Official System & RAG Knowledge Catalog**  
-> *Prepared for Hackathon Judges, Evaluators, and QA Testers*
+> *Prepared for Architecture Evaluation and QA Testing*
 
 ---
 
@@ -185,7 +185,7 @@ To evaluate the AI's hyper-personalization, testers can log in with any of these
 
 ---
 
-## ⚡ What Makes CampusMind AI Hackathon-Winning?
+## ⚡ Key Highlights of CampusMind AI
 
 | Feature | Generic LLM Chatbots | CampusMind AI Copilot |
 | :--- | :--- | :--- |
@@ -197,4 +197,4 @@ To evaluate the AI's hyper-personalization, testers can log in with any of these
 | **Full Year Timetable** | Only general dates | **Complete Odd & Even Semester Subject Timetable** |
 
 ---
-*Created with ❤️ for GEARS 2026 Hackathon*
+*CampusMind AI • Student Intelligence Platform*

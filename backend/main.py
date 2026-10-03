@@ -87,7 +87,7 @@ init_firebase()
 # 3. Create FastAPI application
 app = FastAPI(
     title="CampusMind AI API",
-    description="Hyper-personalized, multilingual AI assistant for college students (GEARS 2026)",
+    description="Hyper-personalized, multilingual AI assistant for college students",
     version="2.0.0"
 )
 
@@ -745,7 +745,7 @@ def view_document(document_name: str):
             <!-- Document Footer -->
             <div class="mt-12 pt-4 border-t border-slate-200 text-xs text-slate-400 flex justify-between items-center">
                 <span>Official Institutional Record • CampusMind AI Platform</span>
-                <span>GEARS 2026 Academic Archive</span>
+                <span>University Academic Archive</span>
             </div>
         </div>
     </div>

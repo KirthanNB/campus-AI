@@ -35,12 +35,12 @@ const NOTICES_DATA = [
   },
   {
     id: 4,
-    title: '🏆 GEARS 2026 Hackathon & Project Expo - Cash Prizes worth ₹5 Lakhs',
+    title: '🏆 Annual Student Innovation & Project Expo - Cash Prizes worth ₹5 Lakhs',
     category: 'Events',
     date: 'Sep 28, 2026',
     isNew: false,
-    summary: 'Annual inter-college technology hackathon and AI copilot exhibition. Submit team proposals before Oct 15.',
-    docRef: 'gears_2026_hackathon_project_expo.md',
+    summary: 'Annual inter-college technology innovation and AI project exhibition. Submit team proposals before Oct 15.',
+    docRef: 'student_innovation_and_project_expo.md',
     badgeColor: 'bg-purple-50 text-purple-700 border-purple-200',
   },
   {

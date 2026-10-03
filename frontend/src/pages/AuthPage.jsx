@@ -131,7 +131,7 @@ export default function AuthPage() {
         <div className="relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-100/80 border border-indigo-200 text-indigo-700 text-xs font-semibold mb-6">
             <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-            GEARS 2026 Hackathon Finalist
+            AI Student Assistant & Academic Copilot
           </div>
 
           <div className="flex items-center gap-3">
@@ -191,7 +191,7 @@ export default function AuthPage() {
         <div className="relative z-10 pt-4 border-t border-slate-200">
           <p className="text-xs text-slate-600 mb-2 flex items-center gap-1.5 font-semibold">
             <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            1-Click Demo Logins (Instant Hackathon Evaluation):
+            1-Click Demo Student Logins:
           </p>
           <div className="flex flex-wrap gap-2">
             <button

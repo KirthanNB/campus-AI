@@ -17,8 +17,7 @@
 ### 1. Hostel Gate Timings & Curfew:
 - **Hostel Block In-Time (All Residents):** 10:00 PM strictly on weekdays (Monday to Friday).
 - **Weekend In-Time:** 10:30 PM on Saturdays and Sundays.
-- **Late Entry Rule:** Entry after curfew requires biometric logging and written approval from the Chief Warden. More than two late entries in a month attracts a penalty of ₹500 and parental notification.
-- **Day Scholar Campus Access:** Day Scholars must vacate campus premises by 09:30 PM unless holding special written permission for cultural festivals, hackathons, or project work.
+- **Day Scholar Campus Access:** Day Scholars must vacate campus premises by 09:30 PM unless holding special written permission for cultural festivals, academic workshops, or lab project work.
 
 ### 2. Dining Hall / Mess Schedule:
 Meals are served in both Block A and Block B dining halls during the following operational windows:

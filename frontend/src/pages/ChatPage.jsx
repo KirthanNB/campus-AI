@@ -10,6 +10,7 @@ import {
   Calendar,
   CreditCard,
   BookOpen,
+  Home,
   Languages,
   User as UserIcon,
   Bot,
@@ -21,11 +22,6 @@ import {
   ShieldCheck,
   Bell,
   ExternalLink,
-  History,
-  MessageSquare,
-  Plus,
-  Trash2,
-  Clock,
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuthStore } from '../store/authStore';
@@ -34,60 +30,6 @@ import GrievancesModal from '../components/GrievancesModal';
 import TimetableModal from '../components/TimetableModal';
 import AttendanceModal from '../components/AttendanceModal';
 import CampusNewsModal from '../components/CampusNewsModal';
-
-// Animated typewriter markdown component for newly generated AI responses
-function TypewriterMarkdown({ content, isNew, onAnimationDone }) {
-  const [displayedLength, setDisplayedLength] = useState(isNew ? 0 : content.length);
-  const [isTyping, setIsTyping] = useState(isNew);
-
-  useEffect(() => {
-    if (!isNew) {
-      setDisplayedLength(content.length);
-      setIsTyping(false);
-      return;
-    }
-
-    setDisplayedLength(0);
-    setIsTyping(true);
-
-    const totalChars = content.length;
-    // Step size calculated so response types smoothly in ~0.8 to 1.2 seconds
-    const stepSize = Math.max(3, Math.ceil(totalChars / 35));
-    const intervalMs = 20;
-
-    const timer = setInterval(() => {
-      setDisplayedLength((prev) => {
-        const next = prev + stepSize;
-        if (next >= totalChars) {
-          clearInterval(timer);
-          setIsTyping(false);
-          if (onAnimationDone) onAnimationDone();
-          return totalChars;
-        }
-        return next;
-      });
-    }, intervalMs);
-
-    return () => clearInterval(timer);
-  }, [content, isNew]);
-
-  const rawVisible = isTyping ? content.slice(0, displayedLength) : content;
-  const cleanContent = rawVisible
-    .replace(/\[ACTION:SHOW_COMPLAINT_FORM:[^\]]*\]/gi, '')
-    .replace(/🏷️\s*\*{0,2}Source:.*$/i, '')
-    .trim();
-
-  return (
-    <div className="prose-chat">
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-        {cleanContent}
-      </ReactMarkdown>
-      {isTyping && (
-        <span className="inline-block w-1.5 h-3.5 ml-1 bg-indigo-600 animate-pulse rounded-full align-middle" />
-      )}
-    </div>
-  );
-}
 
 export default function ChatPage() {
   const { user, logout } = useAuthStore();
@@ -98,12 +40,7 @@ export default function ChatPage() {
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
-  // Chat Sessions & History State
-  const [sessions, setSessions] = useState([]);
-  const [currentSessionId, setCurrentSessionId] = useState(null);
-  const [showHistoryMenu, setShowHistoryMenu] = useState(false);
-
-  // Navigation Feature Modals
+  // New Navigation Feature Modals
   const [showGrievanceModal, setShowGrievanceModal] = useState(false);
   const [showTimetableModal, setShowTimetableModal] = useState(false);
   const [showAttendanceModal, setShowAttendanceModal] = useState(false);
@@ -122,71 +59,26 @@ export default function ChatPage() {
     { label: 'Deutsch (German)', value: 'German' },
   ];
 
-  // Load chat sessions from backend on mount
-  const loadSessions = async () => {
-    try {
-      const sessList = await api.getChatSessions();
-      setSessions(sessList || []);
-      return sessList;
-    } catch (err) {
-      console.error('Failed to load chat sessions:', err);
-      return [];
-    }
-  };
-
-  const loadSessionMessages = async (sessionId) => {
-    if (!sessionId) {
-      setMessages([]);
-      return;
-    }
-    try {
-      const msgs = await api.getSessionMessages(sessionId);
-      if (msgs && msgs.length > 0) {
-        setMessages(
-          msgs.map((m) => ({
-            id: m.id,
-            role: m.role,
-            content: m.content,
-            source: m.source,
-            isNew: false,
-          }))
-        );
-      } else {
-        setMessages([]);
-      }
-      setCurrentSessionId(sessionId);
-    } catch (err) {
-      console.error('Failed to load session messages:', err);
-    }
-  };
-
+  // Load chat history from backend on mount
   useEffect(() => {
-    async function init() {
-      const sessList = await loadSessions();
-      if (sessList && sessList.length > 0) {
-        // Load most recent active session
-        loadSessionMessages(sessList[0].id);
-      } else {
-        // Try fallback chat history
-        try {
-          const history = await api.getChatHistory();
-          if (history && history.length > 0) {
-            setMessages(
-              history.map((msg) => ({
-                id: msg.id,
-                role: msg.role,
-                content: msg.content,
-                source: msg.source,
-                isNew: false,
-              }))
-            );
-          }
-        } catch (e) {
-          console.error('Fallback history error:', e);
+    async function loadHistory() {
+      try {
+        const history = await api.getChatHistory();
+        if (history && history.length > 0) {
+          setMessages(
+            history.map((msg) => ({
+              id: msg.id,
+              role: msg.role,
+              content: msg.content,
+              source: msg.source,
+            }))
+          );
         }
+      } catch (err) {
+        console.error('Failed to load chat history:', err);
       }
     }
-    init();
+    loadHistory();
 
     const handleOpenGrievances = () => setShowGrievanceModal(true);
     window.addEventListener('open_grievances_modal', handleOpenGrievances);
@@ -216,36 +108,27 @@ export default function ChatPage() {
       id: tempId,
       role: 'user',
       content: query,
-      isNew: false,
     };
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
     try {
       const preferredLang = selectedLanguage === 'Auto' ? null : selectedLanguage;
-      const res = await api.sendMessage(query, preferredLang, currentSessionId);
-
-      if (res.session_id && res.session_id !== currentSessionId) {
-        setCurrentSessionId(res.session_id);
-        loadSessions();
-      }
+      const res = await api.sendMessage(query, preferredLang);
 
       const aiMessage = {
         id: tempId + 1,
         role: 'assistant',
         content: res.answer,
         source: res.source,
-        isNew: true, // triggers smooth typing animation
       };
       setMessages((prev) => [...prev, aiMessage]);
-      loadSessions();
     } catch (err) {
       const errorMessage = {
         id: tempId + 1,
         role: 'assistant',
         content: `⚠️ Error: ${err.message || 'Unable to get response. Please check your connection and try again.'}`,
         source: 'System',
-        isNew: false,
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
@@ -255,43 +138,18 @@ export default function ChatPage() {
 
   const handleNewChat = async () => {
     try {
-      setCurrentSessionId(null);
+      await api.clearChatHistory();
       setMessages([]);
-      setShowHistoryMenu(false);
     } catch (err) {
-      console.error('Failed to create new chat:', err);
+      console.error('Failed to clear chat:', err);
       setMessages([]);
-    }
-  };
-
-  const handleSelectSession = (sessId) => {
-    loadSessionMessages(sessId);
-    setShowHistoryMenu(false);
-  };
-
-  const handleDeleteSession = async (e, sessId) => {
-    e.stopPropagation();
-    try {
-      await api.deleteChatSession(sessId);
-      const updated = sessions.filter((s) => s.id !== sessId);
-      setSessions(updated);
-      if (currentSessionId === sessId) {
-        if (updated.length > 0) {
-          loadSessionMessages(updated[0].id);
-        } else {
-          setCurrentSessionId(null);
-          setMessages([]);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to delete session:', err);
     }
   };
 
   // Quick Action chips highlighting the unified AI Copilot capabilities
   const quickActions = [
     {
-      label: 'Attendance & Bunk Calc',
+      label: 'Attendance Calculator',
       icon: ShieldCheck,
       prompt: "What's my attendance percentage in each subject, and can I safely skip 2 classes in DBMS?",
       color: 'from-emerald-500/10 to-teal-500/10 text-emerald-700 border-emerald-200',
@@ -311,7 +169,7 @@ export default function ChatPage() {
     {
       label: 'Campus News & Placements',
       icon: Bell,
-      prompt: 'What are the latest official circulars regarding Google/Microsoft placements and the GEARS hackathon?',
+      prompt: 'What are the latest official circulars regarding campus placements, drives, and student announcements?',
       color: 'from-amber-500/10 to-yellow-500/10 text-amber-700 border-amber-200',
     },
     {
@@ -328,13 +186,11 @@ export default function ChatPage() {
     },
   ];
 
-  const currentSessionTitle = sessions.find((s) => s.id === currentSessionId)?.title || 'Current Chat';
-
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
-      {/* 1. TOP HEADER (max-w-[1000px] center focused) */}
+      {/* 1. TOP HEADER (max-w-[950px] center focused) */}
       <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
-        <div className="max-w-[1000px] mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="max-w-[950px] mx-auto px-4 h-16 flex items-center justify-between">
           {/* Left: Branding & User Profile Chip */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
@@ -402,76 +258,6 @@ export default function ChatPage() {
               <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" />
             </button>
 
-            {/* Chat History Dropdown Menu */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowHistoryMenu(!showHistoryMenu)}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-700 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 transition cursor-pointer"
-                title="View previous chat conversations"
-              >
-                <History className="w-3.5 h-3.5 text-indigo-600" />
-                <span className="hidden lg:inline max-w-[100px] truncate">{currentSessionTitle}</span>
-                <ChevronDown className="w-3 h-3 text-slate-500" />
-              </button>
-
-              {showHistoryMenu && (
-                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-slate-200 py-2 z-50 overflow-hidden">
-                  <div className="px-3.5 py-2 flex items-center justify-between border-b border-slate-100">
-                    <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                      <History className="w-3.5 h-3.5 text-indigo-600" />
-                      Chat History
-                    </span>
-                    <button
-                      onClick={handleNewChat}
-                      className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[11px] font-semibold transition cursor-pointer flex items-center gap-1"
-                    >
-                      <Plus className="w-3 h-3" />
-                      New Chat
-                    </button>
-                  </div>
-
-                  <div className="max-h-64 overflow-y-auto py-1">
-                    {sessions.length === 0 ? (
-                      <div className="p-4 text-center text-xs text-slate-400">
-                        No saved chats yet. Start asking questions to save memory!
-                      </div>
-                    ) : (
-                      sessions.map((s) => (
-                        <div
-                          key={s.id}
-                          onClick={() => handleSelectSession(s.id)}
-                          className={`group px-3.5 py-2.5 hover:bg-slate-50 flex items-center justify-between cursor-pointer transition ${
-                            currentSessionId === s.id ? 'bg-indigo-50/70 border-l-3 border-indigo-600' : ''
-                          }`}
-                        >
-                          <div className="flex items-start gap-2 max-w-[85%]">
-                            <MessageSquare className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${currentSessionId === s.id ? 'text-indigo-600' : 'text-slate-400'}`} />
-                            <div className="truncate">
-                              <div className={`text-xs truncate font-medium ${currentSessionId === s.id ? 'text-indigo-700 font-bold' : 'text-slate-800'}`}>
-                                {s.title || 'Conversation'}
-                              </div>
-                              <div className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-                                <Clock className="w-2.5 h-2.5" />
-                                <span>{new Date(s.updated_at || s.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                              </div>
-                            </div>
-                          </div>
-                          <button
-                            onClick={(e) => handleDeleteSession(e, s.id)}
-                            className="opacity-0 group-hover:opacity-100 p-1 hover:text-red-600 hover:bg-red-50 rounded transition text-slate-400 cursor-pointer"
-                            title="Delete conversation"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
             {/* Language Selector Dropdown */}
             <div className="relative">
               <button
@@ -507,7 +293,7 @@ export default function ChatPage() {
               )}
             </div>
 
-            {/* View Profile Icon Button */}
+            {/* View Profile Icon Button (Updated from 'Info' to 'UserIcon') */}
             <button
               type="button"
               onClick={() => setShowProfileModal(!showProfileModal)}
@@ -541,7 +327,7 @@ export default function ChatPage() {
         </div>
       </header>
 
-      {/* Profile Context Modal */}
+      {/* Profile Context Drawer/Modal */}
       {showProfileModal && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
           <motion.div
@@ -562,7 +348,7 @@ export default function ChatPage() {
               </button>
             </div>
             <p className="text-xs text-slate-500 mt-2 mb-4">
-              Your student profile parameters and branch courses are automatically bound to your account and Firebase memory.
+              Your student profile parameters are automatically bound to your account and injected into every prompt.
             </p>
             <div className="space-y-2 text-xs">
               <div className="flex justify-between py-1.5 border-b border-slate-100">
@@ -648,7 +434,7 @@ export default function ChatPage() {
               ({user?.hostel_status || 'Hostel Block B'}). What can I help you with today?
             </p>
 
-            {/* 6 Quick Action Chips */}
+            {/* 4 Quick Action Chips */}
             <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg">
               {quickActions.map((act) => {
                 const Icon = act.icon;
@@ -695,29 +481,30 @@ export default function ChatPage() {
                     )}
 
                     <div
-                      className={`max-w-[85%] sm:max-w-[78%] rounded-2xl p-4 text-sm ${
-                        isUser
-                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-tr-xs shadow-md shadow-indigo-600/10'
-                          : 'bg-white text-slate-800 rounded-tl-xs border border-slate-200/80 shadow-xs'
-                      }`}
+                      className={`max-w-[85%] sm:max-w-[78%] rounded-2xl p-4 text-sm ${isUser
+                        ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-tr-xs shadow-md shadow-indigo-600/10'
+                        : 'bg-white text-slate-800 rounded-tl-xs border border-slate-200/80 shadow-xs'
+                        }`}
                     >
                       {/* Message Content */}
                       {isUser ? (
                         <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
                       ) : (
                         <div>
-                          {/* Animated Typewriter Markdown renderer */}
-                          <TypewriterMarkdown
-                            content={msg.content}
-                            isNew={msg.isNew}
-                            onAnimationDone={scrollToBottom}
-                          />
+                          <div className="prose-chat">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {msg.content
+                                .replace(/\[ACTION:SHOW_COMPLAINT_FORM:[^\]]*\]/gi, '')
+                                .replace(/🏷️\s*\*{0,2}Source:.*$/i, '')
+                                .trim()}
+                            </ReactMarkdown>
+                          </div>
 
                           {/* Dynamic In-Chat Grievance / Maintenance Action Form */}
                           {(() => {
                             const actionMatch = msg.content.match(/\[ACTION:SHOW_COMPLAINT_FORM:(.*?)\]/i);
                             const hasComplaintKeywords = /complaint|grievance|repair|fix|broken|malfunction|issue with mess|issue with hostel/i.test(msg.content);
-                            
+
                             if (actionMatch || (hasComplaintKeywords && msg.source?.toLowerCase().includes('grievance'))) {
                               let category = "Hostel Maintenance";
                               let suggestedTitle = "";
@@ -839,7 +626,7 @@ export default function ChatPage() {
           </form>
 
           <p className="text-[11px] text-center text-slate-400 mt-2">
-            CampusMind AI • Answers verified with official academic regulations • GEARS 2026
+            CampusMind AI • Hyper-personalized student assistant • Answers verified with official records
           </p>
         </div>
       </footer>
