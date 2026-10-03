@@ -37,3 +37,20 @@ class ChatMessage(Base):
 
     # Relationships
     user = relationship("User", back_populates="messages")
+
+class Ticket(Base):
+    __tablename__ = "tickets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ticket_number = Column(String(50), unique=True, index=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    category = Column(String(60), nullable=False)  # Hostel Maintenance, Mess Food, Academic Grievance, etc.
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=False)
+    location = Column(String(150), nullable=True)  # e.g., Hostel Block B, Room 304
+    priority = Column(String(20), default="Medium")  # Low, Medium, High, Urgent
+    status = Column(String(30), default="Submitted")  # Submitted, In Progress, Resolved
+    estimated_sla = Column(String(50), default="24-48 Hours")
+    offline_option = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+

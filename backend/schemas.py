@@ -62,3 +62,27 @@ class ChatMessageItem(BaseModel):
 
     class Config:
         from_attributes = True
+
+# ----------------- Ticket & Grievance Schemas -----------------
+class TicketCreateRequest(BaseModel):
+    category: str = Field(..., description="Hostel Maintenance, Mess Food, Academic Grievance, etc.")
+    title: str = Field(..., min_length=3, max_length=255)
+    description: str = Field(..., min_length=5)
+    location: Optional[str] = Field(None, description="e.g. Hostel Block B Room 304")
+    priority: Optional[str] = Field("Medium", description="Low, Medium, High, Urgent")
+
+class TicketResponse(BaseModel):
+    id: int
+    ticket_number: str
+    category: str
+    title: str
+    description: str
+    location: Optional[str] = None
+    priority: str
+    status: str
+    estimated_sla: str
+    offline_option: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

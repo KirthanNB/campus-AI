@@ -3,10 +3,17 @@ Verification test for CampusMind AI Smart RAG Engine.
 Tests personalization, branch filtering, hostel knowledge, and multilingual handling.
 """
 
+import os
 import asyncio
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
+
+# Safe UTF-8 printing on Windows
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))

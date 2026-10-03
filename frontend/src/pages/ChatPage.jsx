@@ -18,9 +18,11 @@ import {
   Info,
   ChevronDown,
   Check,
+  FileText,
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuthStore } from '../store/authStore';
+import InteractiveTicketCard from '../components/InteractiveTicketCard';
 
 export default function ChatPage() {
   const { user, logout } = useAuthStore();
@@ -392,9 +394,41 @@ export default function ChatPage() {
                         <div>
                           <div className="prose-chat">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                              {msg.source ? msg.content.replace(/🏷️\s*\*{0,2}Source:.*$/i, '').trim() : msg.content}
+                              {msg.content
+                                .replace(/\[ACTION:SHOW_COMPLAINT_FORM:[^\]]*\]/gi, '')
+                                .replace(/🏷️\s*\*{0,2}Source:.*$/i, '')
+                                .trim()}
                             </ReactMarkdown>
                           </div>
+
+                          {/* Dynamic In-Chat Grievance / Maintenance Action Form */}
+                          {(() => {
+                            const actionMatch = msg.content.match(/\[ACTION:SHOW_COMPLAINT_FORM:(.*?)\]/i);
+                            const hasComplaintKeywords = /complaint|grievance|repair|fix|broken|malfunction|issue with mess|issue with hostel/i.test(msg.content);
+                            
+                            if (actionMatch || (hasComplaintKeywords && msg.source?.toLowerCase().includes('grievance'))) {
+                              let category = "Hostel Maintenance";
+                              let suggestedTitle = "Maintenance / Grievance Request";
+                              let suggestedDesc = "";
+
+                              if (actionMatch && actionMatch[1]) {
+                                const parts = actionMatch[1].split('|');
+                                category = parts[0] || category;
+                                suggestedTitle = parts[1] || suggestedTitle;
+                                suggestedDesc = parts[2] || suggestedDesc;
+                              }
+
+                              return (
+                                <InteractiveTicketCard
+                                  category={category}
+                                  initialTitle={suggestedTitle}
+                                  initialDescription={suggestedDesc}
+                                  userProfile={user || {}}
+                                />
+                              );
+                            }
+                            return null;
+                          })()}
 
                           {/* Citation Badge - only displayed for official academic documents */}
                           {msg.source && msg.source.trim() && msg.source !== 'System' && (

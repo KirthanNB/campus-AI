@@ -26,7 +26,7 @@ from sqlalchemy.orm import Session
 
 # Local application imports
 from backend.database import engine, Base, get_db
-from backend.models import User, ChatMessage
+from backend.models import User, ChatMessage, Ticket
 from backend.schemas import (
     UserRegisterRequest,
     UserLoginRequest,
@@ -34,7 +34,9 @@ from backend.schemas import (
     UserProfileResponse,
     ChatRequest,
     ChatResponse,
-    ChatMessageItem
+    ChatMessageItem,
+    TicketCreateRequest,
+    TicketResponse
 )
 from backend.auth import (
     get_password_hash,
@@ -216,6 +218,67 @@ def clear_chat_history(
     db.query(ChatMessage).filter(ChatMessage.user_id == current_user.id).delete()
     db.commit()
     return {"message": "Chat history cleared successfully."}
+
+# -------------------------------------------------------------
+# STUDENT GRIEVANCE & COMPLAINT TICKET ENDPOINTS
+# -------------------------------------------------------------
+
+@app.post("/api/tickets/create", response_model=TicketResponse, status_code=status.HTTP_201_CREATED)
+def create_ticket(
+    req: TicketCreateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Submits an official student grievance / maintenance ticket directly from chat.
+    Auto-assigns tracking ID, SLA turnaround, and offline office location.
+    """
+    import random
+    import time
+    
+    ticket_seq = int(time.time()) % 100000 + random.randint(100, 999)
+    prefix = "HSTL" if "hostel" in req.category.lower() else ("MESS" if "mess" in req.category.lower() else "ACAD")
+    ticket_number = f"#{prefix}-{ticket_seq}"
+    
+    # Auto-assign SLA & Offline resolution desk based on category
+    sla = "24 Hours" if "hostel" in req.category.lower() or "electrical" in req.category.lower() else "48 Hours"
+    offline_desk = (
+        "Hostel Caretaker Desk (Ground Floor Block B, 9 AM - 6 PM)"
+        if "hostel" in req.category.lower()
+        else ("Chief Warden Office (Admin Block Room 104)" if "mess" in req.category.lower() else "Dean of Academics Office (Block 1, 2nd Floor)")
+    )
+    
+    resolved_loc = req.location or current_user.hostel_status
+
+    ticket = Ticket(
+        ticket_number=ticket_number,
+        user_id=current_user.id,
+        category=req.category,
+        title=req.title,
+        description=req.description,
+        location=resolved_loc,
+        priority=req.priority or "Medium",
+        status="Submitted",
+        estimated_sla=sla,
+        offline_option=offline_desk
+    )
+    db.add(ticket)
+    db.commit()
+    db.refresh(ticket)
+    return ticket
+
+@app.get("/api/tickets/my-tickets", response_model=List[TicketResponse])
+def get_my_tickets(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Retrieves all tickets raised by the current student."""
+    return (
+        db.query(Ticket)
+        .filter(Ticket.user_id == current_user.id)
+        .order_by(Ticket.created_at.desc())
+        .all()
+    )
 
 @app.get("/")
 def health_check():

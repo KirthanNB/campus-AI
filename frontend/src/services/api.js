@@ -94,4 +94,30 @@ export const api = {
     }
     return data;
   },
+
+  // Tickets & Grievance Actions
+  async createTicket(ticketData) {
+    const res = await fetch(`${API_BASE}/tickets/create`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(ticketData),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.detail || 'Failed to create ticket');
+    }
+    return data;
+  },
+
+  async getMyTickets() {
+    const res = await fetch(`${API_BASE}/tickets/my-tickets`, {
+      headers: getAuthHeaders(),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.detail || 'Failed to fetch tickets');
+    }
+    return data;
+  },
 };
+
