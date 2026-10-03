@@ -1,41 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, XCircle, AlertCircle, Calendar, BookOpen, Clock, ShieldCheck, Sun, Filter } from 'lucide-react';
-
-const CLASSWISE_ATTENDANCE = [
-  { code: 'CSE301', title: 'Database Management Systems', attended: 28, total: 32, percentage: 87.5, status: 'Eligible', margin: 'Can miss 4 classes' },
-  { code: 'CSE302', title: 'Operating Systems', attended: 26, total: 30, percentage: 86.6, status: 'Eligible', margin: 'Can miss 3 classes' },
-  { code: 'CSE303', title: 'Design & Analysis of Algorithms', attended: 22, total: 28, percentage: 78.5, status: 'Eligible', margin: 'Can miss 1 class' },
-  { code: 'CSE304', title: 'Artificial Intelligence & ML', attended: 19, total: 26, percentage: 73.0, status: 'Condonation Needed', margin: 'Must attend next 2 classes' },
-  { code: 'CSE305', title: 'Computer Networks', attended: 24, total: 27, percentage: 88.8, status: 'Eligible', margin: 'Can miss 4 classes' },
-];
-
-const DAYWISE_LOG = [
-  { date: '2026-10-02', day: 'Friday', slot: '09:00 AM - 10:00 AM', code: 'CSE303', title: 'Design & Analysis of Algorithms', status: 'Present' },
-  { date: '2026-10-02', day: 'Friday', slot: '10:00 AM - 11:00 AM', code: 'CSE305', title: 'Computer Networks', status: 'Present' },
-  { date: '2026-10-02', day: 'Friday', slot: '11:15 AM - 01:15 PM', code: 'CSL305', title: 'Networks Packet Simulation Lab', status: 'Present' },
-  { date: '2026-10-01', day: 'Thursday', slot: '09:00 AM - 10:00 AM', code: 'CSE305', title: 'Computer Networks', status: 'Absent' },
-  { date: '2026-10-01', day: 'Thursday', slot: '10:00 AM - 11:00 AM', code: 'CSE301', title: 'Database Management Systems', status: 'Present' },
-  { date: '2026-10-01', day: 'Thursday', slot: '11:15 AM - 12:15 PM', code: 'CSE304', title: 'Artificial Intelligence & ML', status: 'Present' },
-  { date: '2026-09-30', day: 'Wednesday', slot: '09:00 AM - 10:00 AM', code: 'CSE302', title: 'Operating Systems', status: 'Class Not Taken' },
-  { date: '2026-09-30', day: 'Wednesday', slot: '10:00 AM - 11:00 AM', code: 'CSE303', title: 'Design & Analysis of Algorithms', status: 'Present' },
-  { date: '2026-09-29', day: 'Tuesday', slot: '09:00 AM - 10:00 AM', code: 'CSE304', title: 'Artificial Intelligence & ML', status: 'Absent' },
-  { date: '2026-09-28', day: 'Monday', slot: '09:00 AM - 04:00 PM', code: 'ALL', title: 'Gandhi Jayanti / University Holiday', status: 'Holiday' },
-];
+import { CheckCircle2, XCircle, AlertCircle, Calendar, BookOpen, Clock, ShieldCheck, Sun, Filter, RefreshCw } from 'lucide-react';
+import { api } from '../services/api';
 
 export default function AttendanceModal({ isOpen, onClose, userProfile }) {
   const [viewTab, setViewTab] = useState('classwise'); // 'classwise' or 'daywise'
   const [filterStatus, setFilterStatus] = useState('All');
+  const [attendanceData, setAttendanceData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadAttendance();
+    }
+  }, [isOpen, userProfile]);
+
+  async function loadAttendance() {
+    setIsLoading(true);
+    try {
+      const data = await api.getAttendance();
+      if (data) {
+        setAttendanceData(data);
+      }
+    } catch (err) {
+      console.error('Failed to load attendance:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   if (!isOpen) return null;
 
-  const totalAttended = CLASSWISE_ATTENDANCE.reduce((acc, c) => acc + c.attended, 0);
-  const totalConducted = CLASSWISE_ATTENDANCE.reduce((acc, c) => acc + c.total, 0);
-  const overallPercentage = ((totalAttended / totalConducted) * 100).toFixed(1);
+  const classwise = attendanceData?.subject_records || [];
+  const daywiseLog = attendanceData?.daywise_log || [];
+  const totalAttended = attendanceData?.overall_attended || classwise.reduce((acc, c) => acc + (c.attended || 0), 0);
+  const totalConducted = attendanceData?.overall_conducted || classwise.reduce((acc, c) => acc + (c.total_conducted || c.total || 0), 0);
+  const overallPercentage = attendanceData?.overall_percentage || (totalConducted > 0 ? ((totalAttended / totalConducted) * 100).toFixed(1) : '83.2');
 
   const filteredDaywise = filterStatus === 'All' 
-    ? DAYWISE_LOG 
-    : DAYWISE_LOG.filter((d) => d.status === filterStatus);
+    ? daywiseLog 
+    : daywiseLog.filter((d) => d.status === filterStatus);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
@@ -140,54 +144,71 @@ export default function AttendanceModal({ isOpen, onClose, userProfile }) {
 
         {/* Tab Content */}
         <div className="p-6 overflow-y-auto flex-1">
-          {viewTab === 'classwise' ? (
+          {isLoading ? (
+            <div className="py-12 flex flex-col items-center justify-center text-slate-400">
+              <RefreshCw className="w-8 h-8 animate-spin text-indigo-600 mb-2" />
+              <p className="text-xs">Loading official attendance records...</p>
+            </div>
+          ) : viewTab === 'classwise' ? (
             <div className="space-y-3">
-              {CLASSWISE_ATTENDANCE.map((c) => (
-                <div
-                  key={c.code}
-                  className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white hover:border-indigo-200 transition shadow-2xs"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
-                          {c.code}
-                        </span>
-                        <h4 className="font-bold text-slate-900 text-sm">{c.title}</h4>
-                      </div>
-                      <div className="text-xs text-slate-500 mt-1">
-                        Attended: <strong className="text-slate-800">{c.attended}</strong> / {c.total} Classes
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 shrink-0 self-start sm:self-center">
-                      <div className="text-right">
-                        <div className={`text-base font-extrabold ${c.percentage >= 75 ? 'text-emerald-600' : 'text-amber-600'}`}>
-                          {c.percentage}%
+              {classwise.length === 0 ? (
+                <div className="text-center py-8 text-xs text-slate-400">No course attendance records found.</div>
+              ) : (
+                classwise.map((c) => (
+                  <div
+                    key={c.code}
+                    className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white hover:border-indigo-200 transition shadow-2xs"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                            {c.code}
+                          </span>
+                          <h4 className="font-bold text-slate-900 text-sm">{c.title}</h4>
                         </div>
-                        <div className="text-[10px] text-slate-400 font-medium">{c.margin}</div>
+                        <div className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-2">
+                          <span>
+                            Attended: <strong className="text-slate-800">{c.attended}</strong> / {c.total_conducted || c.total} Classes
+                          </span>
+                          {c.faculty && (
+                            <span className="text-[11px] text-slate-400">• {c.faculty}</span>
+                          )}
+                          {c.room && (
+                            <span className="text-[11px] text-slate-400">• {c.room}</span>
+                          )}
+                        </div>
                       </div>
-                      <span
-                        className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${
-                          c.percentage >= 75
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                            : 'bg-amber-50 text-amber-700 border-amber-200'
-                        }`}
-                      >
-                        {c.status}
-                      </span>
+
+                      <div className="flex items-center gap-3 shrink-0 self-start sm:self-center">
+                        <div className="text-right">
+                          <div className={`text-base font-extrabold ${c.percentage >= 75 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                            {c.percentage}%
+                          </div>
+                          <div className="text-[10px] text-slate-400 font-medium">{c.margin_summary || c.margin}</div>
+                        </div>
+                        <span
+                          className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${
+                            c.percentage >= 75
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : 'bg-amber-50 text-amber-700 border-amber-200'
+                          }`}
+                        >
+                          {c.status}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Progress bar */}
+                    <div className="w-full bg-slate-200 rounded-full h-1.5 mt-3 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${c.percentage >= 75 ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                        style={{ width: `${Math.min(100, Math.max(0, c.percentage))}%` }}
+                      />
                     </div>
                   </div>
-
-                  {/* Progress bar */}
-                  <div className="w-full bg-slate-200 rounded-full h-1.5 mt-3 overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${c.percentage >= 75 ? 'bg-emerald-500' : 'bg-amber-500'}`}
-                      style={{ width: `${c.percentage}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           ) : (
             /* DAYWISE LOG */

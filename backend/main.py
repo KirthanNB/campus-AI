@@ -6,8 +6,10 @@ Includes JWT Authentication, Profile Management, SQLite Database, and Smart RAG 
 
 import os
 import sys
+import uuid
+from datetime import datetime
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 from dotenv import load_dotenv
 
 # Ensure proper encoding
@@ -25,8 +27,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 # Local application imports
-from backend.database import engine, Base, get_db
-from backend.models import User, ChatMessage, Ticket
+from backend.database import engine, Base, get_db, run_migrations
+from backend.models import User, ChatMessage, Ticket, ChatSession
 from backend.schemas import (
     UserRegisterRequest,
     UserLoginRequest,
@@ -35,6 +37,9 @@ from backend.schemas import (
     ChatRequest,
     ChatResponse,
     ChatMessageItem,
+    ChatSessionResponse,
+    ChatSessionCreateRequest,
+    FirebaseStatusResponse,
     TicketCreateRequest,
     TicketResponse
 )
@@ -46,13 +51,37 @@ from backend.auth import (
 )
 from backend.rag_engine import generate_rag_response
 from backend.seed_users import seed_demo_accounts
+from backend.student_context import (
+    get_student_attendance_summary,
+    get_student_tickets_summary,
+    get_campus_news_summary,
+    build_or_load_student_persona,
+    get_student_courses
+)
+from backend.firebase_service import (
+    init_firebase,
+    is_firebase_configured,
+    get_firebase_status,
+    save_user_to_firebase,
+    save_persona_to_firebase,
+    save_ticket_to_firebase,
+    save_chat_session_to_firebase,
+    save_chat_message_to_firebase,
+    get_chat_sessions_from_firebase,
+    get_session_messages_from_firebase,
+    delete_chat_session_from_firebase
+)
 
 # 2. Initialize Database tables & auto-seed demo accounts
 Base.metadata.create_all(bind=engine)
 try:
+    run_migrations()
     seed_demo_accounts()
 except Exception as e:
-    print(f"[Database] Startup seed notice: {e}")
+    print(f"[Database] Startup seed/migration notice: {e}")
+
+# Attempt Firebase connection on startup
+init_firebase()
 
 # 3. Create FastAPI application
 app = FastAPI(
@@ -71,12 +100,12 @@ app.add_middleware(
 )
 
 # -------------------------------------------------------------
-# AUTHENTICATION ENDPOINTS
+# AUTHENTICATION & PERSONA ENDPOINTS
 # -------------------------------------------------------------
 
 @app.post("/api/auth/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 def register_user(req: UserRegisterRequest, db: Session = Depends(get_db)):
-    """Registers a new student, saves full profile context, and issues JWT."""
+    """Registers a new student, creates structured persona (courses & attendance), and syncs with Firebase."""
     # Check if email is already registered
     existing_email = db.query(User).filter(User.email == req.email.lower()).first()
     if existing_email:
@@ -109,6 +138,21 @@ def register_user(req: UserRegisterRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
 
+    # Build and persist structured student persona to Firebase Firestore
+    user_dict = {
+        "id": user.id,
+        "full_name": user.full_name,
+        "email": user.email,
+        "student_id": user.student_id,
+        "branch": user.branch,
+        "current_year": user.current_year,
+        "batch": user.batch,
+        "hostel_status": user.hostel_status,
+        "phone_number": user.phone_number
+    }
+    save_user_to_firebase(user_dict)
+    build_or_load_student_persona(user_dict, db)
+
     access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
     return TokenResponse(
         access_token=access_token,
@@ -118,13 +162,28 @@ def register_user(req: UserRegisterRequest, db: Session = Depends(get_db)):
 
 @app.post("/api/auth/login", response_model=TokenResponse)
 def login_user(req: UserLoginRequest, db: Session = Depends(get_db)):
-    """Authenticates student credentials and returns access token + profile."""
+    """Authenticates student credentials, loads persona memory, and returns JWT."""
     user = db.query(User).filter(User.email == req.email.lower().strip()).first()
     if not user or not verify_password(req.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password."
         )
+
+    # Ensure student persona is loaded/saved in Firebase Firestore
+    user_dict = {
+        "id": user.id,
+        "full_name": user.full_name,
+        "email": user.email,
+        "student_id": user.student_id,
+        "branch": user.branch,
+        "current_year": user.current_year,
+        "batch": user.batch,
+        "hostel_status": user.hostel_status,
+        "phone_number": user.phone_number
+    }
+    save_user_to_firebase(user_dict)
+    build_or_load_student_persona(user_dict, db)
 
     access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
     return TokenResponse(
@@ -138,9 +197,122 @@ def get_user_profile(current_user: User = Depends(get_current_user)):
     """Fetches full profile context of the logged-in student."""
     return UserProfileResponse.model_validate(current_user)
 
+@app.get("/api/firebase/status", response_model=FirebaseStatusResponse)
+def check_firebase_status():
+    """Returns the current Firebase connection & Firestore status."""
+    return get_firebase_status()
+
 # -------------------------------------------------------------
-# CHAT & RAG ENDPOINTS
+# CHAT SESSIONS & RAG ENDPOINTS
 # -------------------------------------------------------------
+
+def get_or_create_chat_session(user_id: int, session_id: Optional[str], initial_title: str, db: Session) -> ChatSession:
+    """Helper to retrieve existing session or generate a new unique session."""
+    if session_id:
+        existing = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == user_id).first()
+        if existing:
+            return existing
+
+    # Create new session
+    new_id = f"sess_{uuid.uuid4().hex[:12]}"
+    clean_title = (initial_title[:32] + "...") if len(initial_title) > 32 else (initial_title or "New Chat")
+    new_sess = ChatSession(
+        id=new_id,
+        user_id=user_id,
+        title=clean_title
+    )
+    db.add(new_sess)
+    db.commit()
+    db.refresh(new_sess)
+
+    # Sync session to Firebase Firestore
+    save_chat_session_to_firebase({
+        "id": new_id,
+        "user_id": user_id,
+        "title": clean_title,
+        "created_at": new_sess.created_at.isoformat(),
+        "updated_at": new_sess.updated_at.isoformat()
+    })
+    return new_sess
+
+@app.get("/api/chat/sessions", response_model=List[ChatSessionResponse])
+def get_chat_sessions(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Retrieves all chat sessions for the logged in student (for navbar history dropdown)."""
+    sessions = (
+        db.query(ChatSession)
+        .filter(ChatSession.user_id == current_user.id)
+        .order_by(ChatSession.updated_at.desc())
+        .all()
+    )
+    results = []
+    for s in sessions:
+        last_msg = (
+            db.query(ChatMessage)
+            .filter(ChatMessage.session_id == s.id)
+            .order_by(ChatMessage.created_at.desc())
+            .first()
+        )
+        msg_count = db.query(ChatMessage).filter(ChatMessage.session_id == s.id).count()
+        results.append(ChatSessionResponse(
+            id=s.id,
+            user_id=s.user_id,
+            title=s.title,
+            created_at=s.created_at,
+            updated_at=s.updated_at,
+            last_message=last_msg.content[:60] if last_msg else None,
+            message_count=msg_count
+        ))
+    return results
+
+@app.post("/api/chat/sessions", response_model=ChatSessionResponse)
+def create_new_chat_session(
+    req: ChatSessionCreateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Explicitly initializes a new blank chat session."""
+    session = get_or_create_chat_session(current_user.id, None, req.title or "New Chat", db)
+    return ChatSessionResponse(
+        id=session.id,
+        user_id=session.user_id,
+        title=session.title,
+        created_at=session.created_at,
+        updated_at=session.updated_at,
+        last_message=None,
+        message_count=0
+    )
+
+@app.get("/api/chat/sessions/{session_id}/messages", response_model=List[ChatMessageItem])
+def get_session_messages(
+    session_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Retrieves all conversation messages for a specific session."""
+    messages = (
+        db.query(ChatMessage)
+        .filter(ChatMessage.user_id == current_user.id, ChatMessage.session_id == session_id)
+        .order_by(ChatMessage.created_at.asc())
+        .all()
+    )
+    return [ChatMessageItem.model_validate(m) for m in messages]
+
+@app.delete("/api/chat/sessions/{session_id}")
+def delete_chat_session(
+    session_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Deletes a specific chat session and its associated messages."""
+    session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == current_user.id).first()
+    if session:
+        db.delete(session)
+        db.commit()
+    delete_chat_session_from_firebase(session_id)
+    return {"message": "Chat session deleted successfully."}
 
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat_endpoint(
@@ -150,29 +322,56 @@ async def chat_endpoint(
 ):
     """
     Core RAG Endpoint:
-    1. Injects student profile as hidden context
-    2. Dynamically queries ChromaDB filtered by branch and year
-    3. Invokes Gemini 2.5 Flash for factual, hallucination-free answer
-    4. Persists message conversation to database
-    5. Returns answer along with source document citation
+    1. Attaches/creates user chat session
+    2. Builds live rich student context (exact courses, live attendance, grievances, campus announcements)
+    3. Injects student profile and queries vector store
+    4. Invokes Gemini for factual response
+    5. Saves conversation to SQLite and Firebase Firestore
     """
+    session = get_or_create_chat_session(current_user.id, req.session_id, req.message, db)
+
     # 1. Save student's user message
     user_msg = ChatMessage(
+        session_id=session.id,
         user_id=current_user.id,
         role="user",
         content=req.message
     )
     db.add(user_msg)
     db.commit()
+    db.refresh(user_msg)
 
-    # 2. Build profile dict for hidden prompt injection
+    # Sync message to Firebase Firestore
+    save_chat_message_to_firebase(session.id, {
+        "id": user_msg.id,
+        "session_id": session.id,
+        "user_id": current_user.id,
+        "role": "user",
+        "content": req.message,
+        "created_at": user_msg.created_at.isoformat()
+    })
+
+    # 2. Build live rich student context using student's actual student_id
+    attendance_summary = get_student_attendance_summary(
+        branch=current_user.branch,
+        current_year=current_user.current_year,
+        student_id=current_user.student_id
+    )
+    tickets_summary = get_student_tickets_summary(current_user.id, db)
+    news_summary = get_campus_news_summary()
+    courses_list = get_student_courses(current_user.branch, current_user.current_year)
+
     profile_dict = {
         "full_name": current_user.full_name,
         "student_id": current_user.student_id,
         "branch": current_user.branch,
         "current_year": current_user.current_year,
         "batch": current_user.batch,
-        "hostel_status": current_user.hostel_status
+        "hostel_status": current_user.hostel_status,
+        "courses": courses_list,
+        "attendance_summary": attendance_summary,
+        "tickets": tickets_summary,
+        "campus_news": news_summary
     }
 
     # 3. Generate response using Smart RAG Engine
@@ -184,19 +383,34 @@ async def chat_endpoint(
 
     # 4. Save AI assistant message
     ai_msg = ChatMessage(
+        session_id=session.id,
         user_id=current_user.id,
         role="assistant",
         content=rag_result["answer"],
         source=rag_result["source"]
     )
+    session.updated_at = datetime.utcnow()
     db.add(ai_msg)
     db.commit()
+    db.refresh(ai_msg)
+
+    # Sync AI message to Firebase Firestore
+    save_chat_message_to_firebase(session.id, {
+        "id": ai_msg.id,
+        "session_id": session.id,
+        "user_id": current_user.id,
+        "role": "assistant",
+        "content": rag_result["answer"],
+        "source": rag_result["source"],
+        "created_at": ai_msg.created_at.isoformat()
+    })
 
     return ChatResponse(
         answer=rag_result["answer"],
         source=rag_result["source"],
         branch=current_user.branch,
-        year=current_user.current_year
+        year=current_user.current_year,
+        session_id=session.id
     )
 
 @app.get("/api/chat/history", response_model=List[ChatMessageItem])
@@ -204,7 +418,7 @@ def get_chat_history(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Retrieves previous chat messages for current student."""
+    """Retrieves recent chat messages across active sessions for current student."""
     messages = (
         db.query(ChatMessage)
         .filter(ChatMessage.user_id == current_user.id)
@@ -221,8 +435,28 @@ def clear_chat_history(
 ):
     """Clears conversation history for 'New Chat' functionality."""
     db.query(ChatMessage).filter(ChatMessage.user_id == current_user.id).delete()
+    db.query(ChatSession).filter(ChatSession.user_id == current_user.id).delete()
     db.commit()
     return {"message": "Chat history cleared successfully."}
+
+@app.get("/api/student/attendance")
+def get_student_attendance(current_user: User = Depends(get_current_user)):
+    """Returns dynamic subject attendance, percentages, and bunk margins for logged in student."""
+    return get_student_attendance_summary(
+        branch=current_user.branch,
+        current_year=current_user.current_year,
+        student_id=current_user.student_id
+    )
+
+@app.get("/api/student/courses")
+def get_student_course_catalog(current_user: User = Depends(get_current_user)):
+    """Returns official course catalog for the student's branch and year."""
+    return get_student_courses(current_user.branch, current_user.current_year)
+
+@app.get("/api/student/news")
+def get_student_news():
+    """Returns active verified university announcements and circulars."""
+    return get_campus_news_summary()
 
 # -------------------------------------------------------------
 # STUDENT GRIEVANCE & COMPLAINT TICKET ENDPOINTS
@@ -237,6 +471,7 @@ def create_ticket(
     """
     Submits an official student grievance / maintenance ticket directly from chat.
     Auto-assigns tracking ID, SLA turnaround, and offline office location.
+    Persists to SQLite and Firebase Firestore.
     """
     import random
     import time
@@ -270,6 +505,25 @@ def create_ticket(
     db.add(ticket)
     db.commit()
     db.refresh(ticket)
+
+    # Sync ticket to Firebase Firestore
+    save_ticket_to_firebase({
+        "id": ticket.id,
+        "ticket_number": ticket.ticket_number,
+        "user_id": current_user.id,
+        "student_id": current_user.student_id,
+        "student_name": current_user.full_name,
+        "category": ticket.category,
+        "title": ticket.title,
+        "description": ticket.description,
+        "location": ticket.location,
+        "priority": ticket.priority,
+        "status": ticket.status,
+        "estimated_sla": ticket.estimated_sla,
+        "offline_option": ticket.offline_option,
+        "created_at": ticket.created_at.isoformat()
+    })
+
     return ticket
 
 @app.get("/api/tickets/my-tickets", response_model=List[TicketResponse])

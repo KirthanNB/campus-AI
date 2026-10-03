@@ -12,6 +12,9 @@ frontend/.env.*
 !frontend/.env.example
 *.env.local
 *.env.production
+*serviceAccountKey*.json
+backend/serviceAccountKey.json
+serviceAccountKey.json
 
 # ==========================================
 # Python & Virtual Environments

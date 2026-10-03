@@ -46,15 +46,33 @@ class TokenResponse(BaseModel):
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, description="Student's query to CampusMind AI")
     preferred_language: Optional[str] = Field(None, description="Optional target language e.g. Hindi, Telugu, Spanish")
+    session_id: Optional[str] = Field(None, description="Chat session identifier")
 
 class ChatResponse(BaseModel):
     answer: str
     source: str
     branch: str
     year: str
+    session_id: Optional[str] = None
+
+class ChatSessionCreateRequest(BaseModel):
+    title: Optional[str] = Field("New Conversation", max_length=255)
+
+class ChatSessionResponse(BaseModel):
+    id: str
+    user_id: int
+    title: str
+    created_at: datetime
+    updated_at: datetime
+    last_message: Optional[str] = None
+    message_count: Optional[int] = 0
+
+    class Config:
+        from_attributes = True
 
 class ChatMessageItem(BaseModel):
     id: int
+    session_id: Optional[str] = None
     role: str
     content: str
     source: Optional[str] = None
@@ -62,6 +80,11 @@ class ChatMessageItem(BaseModel):
 
     class Config:
         from_attributes = True
+
+class FirebaseStatusResponse(BaseModel):
+    configured: bool
+    project_id: Optional[str] = None
+    message: str
 
 # ----------------- Ticket & Grievance Schemas -----------------
 class TicketCreateRequest(BaseModel):
