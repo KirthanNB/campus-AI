@@ -257,6 +257,48 @@ export default function AuthPage() {
             </button>
           </div>
 
+          {/* Direct 1-Click Quick Login Buttons inside the Card */}
+          {isLogin && (
+            <div className="mb-5 p-3 rounded-xl bg-slate-900/90 border border-indigo-500/30">
+              <div className="flex items-center gap-1.5 text-xs text-indigo-300 font-semibold mb-2">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>Instant 1-Click Demo Logins:</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginData({ email: 'arjun.sharma@campus.edu', password: 'Campus@123' });
+                    setError('');
+                  }}
+                  className="py-1.5 px-2 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-200 border border-indigo-500/30 text-xs font-medium text-center transition-all cursor-pointer truncate"
+                >
+                  ⚡ Arjun (CSE 1st Yr)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginData({ email: 'priya.patel@campus.edu', password: 'Campus@123' });
+                    setError('');
+                  }}
+                  className="py-1.5 px-2 rounded-lg bg-purple-600/20 hover:bg-purple-600/40 text-purple-200 border border-purple-500/30 text-xs font-medium text-center transition-all cursor-pointer truncate"
+                >
+                  ⚡ Priya (ECE 2nd Yr)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginData({ email: 'rahul.verma@campus.edu', password: 'Campus@123' });
+                    setError('');
+                  }}
+                  className="py-1.5 px-2 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-200 border border-emerald-500/30 text-xs font-medium text-center transition-all cursor-pointer truncate"
+                >
+                  ⚡ Rahul (MECH 3rd Yr)
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Error Banner */}
           {error && (
             <motion.div

@@ -45,9 +45,14 @@ from backend.auth import (
     get_current_user
 )
 from backend.rag_engine import generate_rag_response
+from backend.seed_users import seed_demo_accounts
 
-# 2. Initialize Database tables
+# 2. Initialize Database tables & auto-seed demo accounts
 Base.metadata.create_all(bind=engine)
+try:
+    seed_demo_accounts()
+except Exception as e:
+    print(f"[Database] Startup seed notice: {e}")
 
 # 3. Create FastAPI application
 app = FastAPI(

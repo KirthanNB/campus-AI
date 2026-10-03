@@ -122,7 +122,18 @@ cd campus-AI
 
 ---
 
-### Step 2: Configure Environment Variables
+### ⚡ Option A: 1-Click Automated Launch (Recommended)
+
+1. Paste your Gemini API key inside `.env` (copied from `.env.example`).
+2. Run the automated launcher:
+   - **On Windows**: Double-click **`run_app.bat`** (or type `.\run_app.bat` in terminal).
+   - **On macOS / Linux**: Run `chmod +x run_app.sh && ./run_app.sh`.
+
+*This script automatically installs all dependencies, seeds the database and knowledge base, and boots up both the backend and frontend!*
+
+---
+
+### 🛠️ Option B: Step-by-Step Manual Setup
 Copy the template `.env.example` files:
 ```bash
 # Root environment file
