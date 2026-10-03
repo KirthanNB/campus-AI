@@ -285,6 +285,173 @@ def get_my_tickets(
         .all()
     )
 
+# -------------------------------------------------------------
+# DOCUMENT & CITATION VIEWER ENDPOINT (PDF PRINT / HTML VIEW)
+# -------------------------------------------------------------
+
+from fastapi.responses import HTMLResponse
+
+@app.get("/api/documents/view/{document_name:path}", response_class=HTMLResponse)
+def view_document(document_name: str):
+    """
+    Renders official institutional documents from knowledge_base as a clean printable PDF / HTML page.
+    """
+    import html
+    kb_dir = BASE_DIR.parent / "knowledge_base"
+    if not kb_dir.exists():
+        kb_dir = BASE_DIR / "knowledge_base"
+    
+    clean_name = document_name.strip().strip("[]*`")
+    if not clean_name.endswith(".md"):
+        target_file = kb_dir / f"{clean_name}.md"
+    else:
+        target_file = kb_dir / clean_name
+        
+    doc_path = None
+    if target_file.exists():
+        doc_path = target_file
+    else:
+        # Search for closest matching filename in knowledge_base
+        search_terms = clean_name.replace("_", " ").replace("-", " ").lower().split()
+        all_mds = list(kb_dir.glob("*.md"))
+        best_match = None
+        highest_score = 0
+        
+        for md_file in all_mds:
+            fname_lower = md_file.stem.lower()
+            score = sum(1 for term in search_terms if term in fname_lower)
+            if score > highest_score:
+                highest_score = score
+                best_match = md_file
+                
+        if best_match:
+            doc_path = best_match
+        elif all_mds:
+            doc_path = all_mds[0]
+
+    if not doc_path or not doc_path.exists():
+        fallback_path = kb_dir / "academic_policies_and_attendance.md"
+        if fallback_path.exists():
+            doc_path = fallback_path
+        else:
+            raise HTTPException(status_code=404, detail="Document not found.")
+
+    raw_content = doc_path.read_text(encoding="utf-8")
+    
+    # Strip frontmatter if present
+    doc_content = raw_content
+    if raw_content.startswith("---"):
+        parts = raw_content.split("---", 2)
+        if len(parts) >= 3:
+            doc_content = parts[2].strip()
+
+    title_line = doc_path.stem.replace("_", " ").title()
+
+    # Convert basic markdown tables and headers to clean HTML
+    lines = doc_content.split("\n")
+    html_body = []
+    in_table = False
+    
+    for line in lines:
+        line_str = line.strip()
+        if line_str.startswith("# "):
+            html_body.append(f"<h1 class='text-2xl font-bold text-slate-900 mt-6 mb-3 border-b pb-2 border-slate-200'>{html.escape(line_str[2:])}</h1>")
+        elif line_str.startswith("## "):
+            html_body.append(f"<h2 class='text-xl font-bold text-indigo-700 mt-5 mb-2.5'>{html.escape(line_str[3:])}</h2>")
+        elif line_str.startswith("### "):
+            html_body.append(f"<h3 class='text-lg font-semibold text-slate-800 mt-4 mb-2'>{html.escape(line_str[4:])}</h3>")
+        elif line_str.startswith("|") and "|" in line_str[1:]:
+            if "---" in line_str:
+                continue
+            cols = [c.strip() for c in line_str.split("|")[1:-1]]
+            if not in_table:
+                in_table = True
+                html_body.append("<div class='overflow-x-auto my-4'><table class='w-full text-left border-collapse border border-slate-200 text-sm'><thead><tr class='bg-slate-100 text-slate-700 font-semibold'>")
+                for c in cols:
+                    html_body.append(f"<th class='border border-slate-200 px-3 py-2'>{html.escape(c)}</th>")
+                html_body.append("</tr></thead><tbody>")
+            else:
+                html_body.append("<tr class='hover:bg-slate-50 text-slate-800'>")
+                for c in cols:
+                    html_body.append(f"<td class='border border-slate-200 px-3 py-2'>{html.escape(c)}</td>")
+                html_body.append("</tr>")
+        else:
+            if in_table:
+                in_table = False
+                html_body.append("</tbody></table></div>")
+            if line_str.startswith("- "):
+                html_body.append(f"<li class='ml-6 list-disc text-slate-700 my-1'>{html.escape(line_str[2:])}</li>")
+            elif line_str:
+                html_body.append(f"<p class='text-slate-700 my-2 leading-relaxed'>{html.escape(line_str)}</p>")
+
+    if in_table:
+        html_body.append("</tbody></table></div>")
+
+    rendered_content = "\n".join(html_body)
+
+    full_html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title_line} - CampusMind Document Archive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {{
+            .no-print {{ display: none !important; }}
+            body {{ background: white !important; padding: 0 !important; }}
+            .paper {{ shadow: none !important; border: none !important; padding: 0 !important; }}
+        }}
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 py-8 px-4 font-sans">
+    <div class="max-w-4xl mx-auto">
+        <!-- Print Header & Controls -->
+        <div class="no-print flex items-center justify-between mb-6 bg-white p-4 rounded-xl shadow-xs border border-slate-200">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold">
+                    🎓
+                </div>
+                <div>
+                    <h2 class="font-bold text-slate-900 text-sm">CampusMind Institutional Repository</h2>
+                    <p class="text-xs text-slate-500">Official Verified Circular & Academic Regulation</p>
+                </div>
+            </div>
+            <button onclick="window.print()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition cursor-pointer flex items-center gap-2">
+                🖨️ Print / Save as PDF
+            </button>
+        </div>
+
+        <!-- Document Paper View -->
+        <div class="paper bg-white p-8 sm:p-12 rounded-2xl shadow-md border border-slate-200">
+            <!-- Header Stamp -->
+            <div class="border-b-2 border-indigo-600 pb-4 mb-6 flex justify-between items-end">
+                <div>
+                    <div class="text-xs font-bold text-indigo-600 uppercase tracking-widest">CampusMind University Records</div>
+                    <h1 class="text-2xl font-extrabold text-slate-900 mt-1">{title_line}</h1>
+                </div>
+                <div class="text-right text-xs text-slate-400 font-mono">
+                    REF: {doc_path.name}<br>
+                    VERIFIED & APPROVED
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="prose max-w-none">
+                {rendered_content}
+            </div>
+
+            <!-- Document Footer -->
+            <div class="mt-12 pt-4 border-t border-slate-200 text-xs text-slate-400 flex justify-between items-center">
+                <span>Official Institutional Record • CampusMind AI Platform</span>
+                <span>GEARS 2026 Academic Archive</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>"""
+    return HTMLResponse(content=full_html)
+
 @app.get("/")
 def health_check():
     return {
@@ -293,3 +460,4 @@ def health_check():
         "version": "2.0.0",
         "ai_model": os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
     }
+

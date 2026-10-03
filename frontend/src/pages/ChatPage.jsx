@@ -15,14 +15,21 @@ import {
   User as UserIcon,
   Bot,
   Tag,
-  Info,
   ChevronDown,
   Check,
   FileText,
+  ShieldAlert,
+  ShieldCheck,
+  Bell,
+  ExternalLink,
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuthStore } from '../store/authStore';
 import InteractiveTicketCard from '../components/InteractiveTicketCard';
+import GrievancesModal from '../components/GrievancesModal';
+import TimetableModal from '../components/TimetableModal';
+import AttendanceModal from '../components/AttendanceModal';
+import CampusNewsModal from '../components/CampusNewsModal';
 
 export default function ChatPage() {
   const { user, logout } = useAuthStore();
@@ -32,6 +39,13 @@ export default function ChatPage() {
   const [selectedLanguage, setSelectedLanguage] = useState('Auto');
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+
+  // New Navigation Feature Modals
+  const [showGrievanceModal, setShowGrievanceModal] = useState(false);
+  const [showTimetableModal, setShowTimetableModal] = useState(false);
+  const [showAttendanceModal, setShowAttendanceModal] = useState(false);
+  const [showNewsModal, setShowNewsModal] = useState(false);
+
   const messagesEndRef = useRef(null);
 
   const languages = [
@@ -156,9 +170,9 @@ export default function ChatPage() {
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
-      {/* 1. TOP HEADER (max-w-4xl / 800px center focused) */}
+      {/* 1. TOP HEADER (max-w-[950px] center focused) */}
       <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
-        <div className="max-w-[850px] mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="max-w-[950px] mx-auto px-4 h-16 flex items-center justify-between">
           {/* Left: Branding & User Profile Chip */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
@@ -178,18 +192,64 @@ export default function ChatPage() {
             </div>
           </div>
 
-          {/* Right: Language Pill, New Chat, and Logout */}
-          <div className="flex items-center gap-2">
+          {/* Center/Right Navigation Section & Action Buttons */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Nav Item 1: Timetable */}
+            <button
+              type="button"
+              onClick={() => setShowTimetableModal(true)}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 transition cursor-pointer flex items-center gap-1"
+              title="View your branch & year timetable"
+            >
+              <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="hidden md:inline">Timetable</span>
+            </button>
+
+            {/* Nav Item 2: Attendance */}
+            <button
+              type="button"
+              onClick={() => setShowAttendanceModal(true)}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200 transition cursor-pointer flex items-center gap-1"
+              title="Check classwise & daywise attendance"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="hidden md:inline">Attendance</span>
+            </button>
+
+            {/* Nav Item 3: Grievances & Complaints */}
+            <button
+              type="button"
+              onClick={() => setShowGrievanceModal(true)}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-red-50 hover:text-red-600 border border-slate-200 transition cursor-pointer flex items-center gap-1"
+              title="File or track maintenance grievances"
+            >
+              <ShieldAlert className="w-3.5 h-3.5 text-red-600" />
+              <span className="hidden md:inline">Grievances</span>
+            </button>
+
+            {/* Nav Item 4: News & Admin Circulars */}
+            <button
+              type="button"
+              onClick={() => setShowNewsModal(true)}
+              className="relative p-2 rounded-lg text-slate-700 bg-slate-100 hover:bg-amber-50 hover:text-amber-600 border border-slate-200 transition cursor-pointer flex items-center gap-1"
+              title="Campus News & Admin Circulars"
+            >
+              <Bell className="w-4 h-4 text-amber-500" />
+              <span className="hidden md:inline text-xs font-semibold">News</span>
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 animate-ping" />
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" />
+            </button>
+
             {/* Language Selector Dropdown */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setShowLangMenu(!showLangMenu)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition cursor-pointer"
-                title="Select preferred response language"
+                className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition cursor-pointer"
+                title="Select response language"
               >
                 <Languages className="w-3.5 h-3.5 text-indigo-600" />
-                <span className="hidden sm:inline">{selectedLanguage}</span>
+                <span className="hidden lg:inline">{selectedLanguage}</span>
                 <ChevronDown className="w-3 h-3 text-slate-500" />
               </button>
 
@@ -215,24 +275,25 @@ export default function ChatPage() {
               )}
             </div>
 
-            {/* View Profile Button */}
+            {/* View Profile Icon Button (Updated from 'Info' to 'UserIcon') */}
             <button
               type="button"
               onClick={() => setShowProfileModal(!showProfileModal)}
-              className="p-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-slate-100 transition cursor-pointer"
-              title="View Injected Profile Context"
+              className="p-2 rounded-lg text-slate-700 hover:text-indigo-600 hover:bg-indigo-50 transition cursor-pointer border border-slate-200"
+              title="Student Profile Context"
             >
-              <Info className="w-4 h-4" />
+              <UserIcon className="w-4 h-4 text-indigo-600" />
             </button>
 
             {/* New Chat Button */}
             <button
               type="button"
               onClick={handleNewChat}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition cursor-pointer"
+              className="p-2 sm:px-3 sm:py-1.5 rounded-lg text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition cursor-pointer flex items-center gap-1"
+              title="Start New Chat"
             >
               <RotateCcw className="w-3.5 h-3.5 text-slate-600" />
-              <span className="hidden sm:inline">New Chat</span>
+              <span className="hidden sm:inline">New</span>
             </button>
 
             {/* Logout Button */}
@@ -258,18 +319,18 @@ export default function ChatPage() {
           >
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-indigo-600" />
-                Injected Hidden Profile Context
+                <UserIcon className="w-4.5 h-4.5 text-indigo-600" />
+                Student Profile & Injected Context
               </h3>
               <button
                 onClick={() => setShowProfileModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-sm font-semibold"
+                className="text-slate-400 hover:text-slate-600 text-sm font-semibold cursor-pointer"
               >
                 ✕
               </button>
             </div>
             <p className="text-xs text-slate-500 mt-2 mb-4">
-              This profile data is automatically passed to the RAG engine on every message so the AI never needs to ask for your details.
+              Your student profile parameters are automatically bound to your account and injected into every prompt.
             </p>
             <div className="space-y-2 text-xs">
               <div className="flex justify-between py-1.5 border-b border-slate-100">
@@ -297,13 +358,13 @@ export default function ChatPage() {
                 <span className="font-semibold text-emerald-600">{user?.hostel_status}</span>
               </div>
               <div className="flex justify-between py-1.5">
-                <span className="text-slate-500">Email:</span>
+                <span className="text-slate-500">Email Address:</span>
                 <span className="font-semibold text-slate-800">{user?.email}</span>
               </div>
             </div>
             <button
               onClick={() => setShowProfileModal(false)}
-              className="mt-6 w-full py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 transition"
+              className="mt-6 w-full py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 transition cursor-pointer"
             >
               Close
             </button>
@@ -311,7 +372,28 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* 2. CHAT CONTENT AREA (Centered, focused max-w-4xl / 800px) */}
+      {/* Feature Modals */}
+      <GrievancesModal
+        isOpen={showGrievanceModal}
+        onClose={() => setShowGrievanceModal(false)}
+        userProfile={user}
+      />
+      <TimetableModal
+        isOpen={showTimetableModal}
+        onClose={() => setShowTimetableModal(false)}
+        userProfile={user}
+      />
+      <AttendanceModal
+        isOpen={showAttendanceModal}
+        onClose={() => setShowAttendanceModal(false)}
+        userProfile={user}
+      />
+      <CampusNewsModal
+        isOpen={showNewsModal}
+        onClose={() => setShowNewsModal(false)}
+      />
+
+      {/* 2. CHAT CONTENT AREA (Centered, focused max-w-[850px]) */}
       <main className="flex-1 max-w-[850px] w-full mx-auto px-4 pt-4 pb-28 flex flex-col justify-start">
         {messages.length === 0 ? (
           /* EMPTY STATE */
@@ -424,19 +506,35 @@ export default function ChatPage() {
                                   initialTitle={suggestedTitle}
                                   initialDescription={suggestedDesc}
                                   userProfile={user || {}}
+                                  onSuccess={() => {
+                                    window.dispatchEvent(new CustomEvent('ticket_submitted'));
+                                  }}
                                 />
                               );
                             }
                             return null;
                           })()}
 
-                          {/* Citation Badge - only displayed for official academic documents */}
+                          {/* Citation Badge - opens printable PDF document view in new tab */}
                           {msg.source && msg.source.trim() && msg.source !== 'System' && (
-                            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
-                              <Tag className="w-3 h-3 text-indigo-500 shrink-0" />
-                              <span className="truncate">
-                                Source: <span className="text-indigo-600 font-semibold">{msg.source}</span>
-                              </span>
+                            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] font-medium text-slate-500">
+                              <div className="flex items-center gap-1.5 truncate">
+                                <Tag className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                                <span className="truncate">
+                                  Source Document:{' '}
+                                  <strong className="text-slate-800">{msg.source}</strong>
+                                </span>
+                              </div>
+                              <a
+                                href={`http://127.0.0.1:8000/api/documents/view/${encodeURIComponent(msg.source)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-2.5 py-1 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold border border-indigo-200 transition cursor-pointer flex items-center gap-1 shrink-0"
+                                title="Open full official document in new tab"
+                              >
+                                <span>Open PDF Source</span>
+                                <ExternalLink className="w-3 h-3 text-indigo-600" />
+                              </a>
                             </div>
                           )}
                         </div>
@@ -452,7 +550,7 @@ export default function ChatPage() {
                 );
               })}
 
-              {/* Sleek Thinking Animation Indicator */}
+              {/* Thinking Animation Indicator */}
               {isLoading && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
@@ -480,7 +578,7 @@ export default function ChatPage() {
         )}
       </main>
 
-      {/* 3. FLOATING BOTTOM INPUT AREA (Rounded pill shape, centered) */}
+      {/* 3. FLOATING BOTTOM INPUT AREA */}
       <footer className="fixed bottom-0 left-0 right-0 z-20 pointer-events-none pb-4 pt-2 bg-gradient-to-t from-slate-100 via-slate-100/90 to-transparent">
         <div className="max-w-[850px] mx-auto px-4 pointer-events-auto">
           <form
