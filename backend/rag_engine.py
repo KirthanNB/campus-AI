@@ -34,13 +34,11 @@ CHROMA_DIR = BASE_DIR / "backend" / "chroma_db"
 COLLECTION_NAME = "campusmind_knowledge"
 PRIMARY_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
-# Fast, low-latency Gemini model hierarchy
+# Fast, low-latency Gemini model hierarchy prioritizing fast models with highest uptime
 MODEL_HIERARCHY = [
-    "gemini-3.5-flash-lite",
-    PRIMARY_MODEL,
     "gemini-2.5-flash",
+    "gemini-3.5-flash-lite",
     "gemini-3.1-flash-lite",
-    "gemini-3.7-flash",
 ]
 
 _retrieval_cache = {}  # In-memory LRU cache for repeat queries
@@ -161,8 +159,9 @@ async def invoke_llm_with_fallback(prompt: ChatPromptTemplate, question: str) ->
         try:
             llm = ChatGoogleGenerativeAI(
                 model=model_name,
-                temperature=0.3,
-                max_retries=0
+                temperature=0.2,
+                max_output_tokens=1024,
+                max_retries=1
             )
             chain = prompt | llm
             response = await chain.ainvoke({"question": question})

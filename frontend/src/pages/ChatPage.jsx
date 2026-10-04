@@ -289,43 +289,17 @@ export default function ChatPage() {
         }).catch((err) => console.log('Session sync notice:', err));
       }
 
-      // Progressive typewriter streaming over ~1s for natural AI response experience
+      // Immediately render AI response without artificial delays
       const fullText = res.answer || '';
-      const totalSteps = 25; // 25 chunks over 1000ms (~40ms per step)
-      const stepDuration = 40;
-      const chunkSize = Math.max(1, Math.ceil(fullText.length / totalSteps));
       const aiMsgId = `ai_${Date.now()}`;
-
-      let currentLength = chunkSize;
-      const initialAssistantMsg = {
+      const assistantMsg = {
         id: aiMsgId,
         role: 'assistant',
-        content: fullText.slice(0, currentLength),
+        content: fullText,
         source: res.source,
         created_at: new Date().toISOString(),
       };
-      setMessages((prev) => [...prev, initialAssistantMsg]);
-
-      // Stream remaining text smoothly
-      if (currentLength < fullText.length) {
-        await new Promise((resolve) => {
-          const streamInterval = setInterval(() => {
-            currentLength += chunkSize;
-            if (currentLength >= fullText.length) {
-              clearInterval(streamInterval);
-              setMessages((prev) =>
-                prev.map((m) => (m.id === aiMsgId ? { ...m, content: fullText } : m))
-              );
-              resolve();
-            } else {
-              const partial = fullText.slice(0, currentLength);
-              setMessages((prev) =>
-                prev.map((m) => (m.id === aiMsgId ? { ...m, content: partial } : m))
-              );
-            }
-          }, stepDuration);
-        });
-      }
+      setMessages((prev) => [...prev, assistantMsg]);
     } catch (err) {
       console.error('Chat error:', err);
       const errorMsg = {
