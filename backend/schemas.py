@@ -54,6 +54,7 @@ class ChatResponse(BaseModel):
     branch: str
     year: str
     session_id: Optional[str] = None
+    session_title: Optional[str] = None
 
 class ChatSessionCreateRequest(BaseModel):
     title: Optional[str] = Field("New Conversation", max_length=255)

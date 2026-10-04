@@ -384,6 +384,23 @@ async def chat_endpoint(
     """
     session = get_or_create_chat_session(current_user.id, req.session_id, req.message, db)
 
+    # Automatically rename session if it's currently generic ("New Chat", "New Copilot Chat", etc.)
+    generic_titles = ["new chat", "new copilot chat", "new conversation", "copilot chat"]
+    current_title_lower = (session.title or "").strip().lower()
+    if current_title_lower in generic_titles or current_title_lower.startswith("new "):
+        new_title = (req.message[:32] + "...") if len(req.message) > 32 else req.message
+        session.title = new_title
+        try:
+            save_chat_session_to_firebase({
+                "id": session.id,
+                "user_id": current_user.id,
+                "title": session.title,
+                "created_at": session.created_at.isoformat(),
+                "updated_at": datetime.utcnow().isoformat()
+            })
+        except Exception as e:
+            print(f"[Session Title] Firebase sync notice: {e}")
+
     # 1. Save student's user message
     user_msg = ChatMessage(
         session_id=session.id,
@@ -464,7 +481,8 @@ async def chat_endpoint(
         source=rag_result["source"],
         branch=current_user.branch,
         year=current_user.current_year,
-        session_id=session.id
+        session_id=session.id,
+        session_title=session.title
     )
 
 @app.get("/api/chat/history", response_model=List[ChatMessageItem])

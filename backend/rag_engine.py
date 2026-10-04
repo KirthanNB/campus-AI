@@ -378,13 +378,13 @@ Official Institutional Records (Knowledge Base):
         extracted_source = ""
         clean_answer = raw_response.strip()
 
-        # Look for 🏷️ Source: [Document Name] or Source: [Document Name] anywhere near the end or within text
-        source_pattern = r'(?:🏷️\s*)?Source:\s*\[?(.*?)\]?(?:\s*$|\n)'
+        # Look for 🏷️ Source: [Document Name], Source: Document Name, **Source**: [Document Name] anywhere
+        source_pattern = r'(?:🏷️\s*)?(?:\*{1,2})?Source(?:\*{1,2})?:\s*\[?([a-zA-Z0-9_\-\.\s]+\.md)\]?'
         match = re.search(source_pattern, clean_answer, re.IGNORECASE)
         
         if match:
             raw_src = match.group(1).strip().strip("[]*`")
-            clean_answer = re.sub(source_pattern, '', clean_answer, flags=re.IGNORECASE).strip()
+            clean_answer = re.sub(r'(?:🏷️\s*)?(?:\*{1,2})?Source(?:\*{1,2})?:\s*\[?[a-zA-Z0-9_\-\.\s]+\]?', '', clean_answer, flags=re.IGNORECASE).strip()
 
             if raw_src and raw_src.lower() not in ["none", "n/a", "null", "no document", "erp", "attendance record", "live attendance", "system"]:
                 if not raw_src.endswith(".md"):
@@ -400,18 +400,30 @@ Official Institutional Records (Knowledge Base):
                             break
                     if not extracted_source and list(sources_set):
                         extracted_source = list(sources_set)[0]
+        else:
+            # Broad regex check if source was mentioned without .md extension
+            alt_pattern = r'(?:🏷️\s*)?(?:\*{1,2})?Source(?:\*{1,2})?:\s*\[?([^\n\r]+)\]?'
+            alt_match = re.search(alt_pattern, clean_answer, re.IGNORECASE)
+            if alt_match:
+                raw_src = alt_match.group(1).strip().strip("[]*`")
+                clean_answer = re.sub(alt_pattern, '', clean_answer, flags=re.IGNORECASE).strip()
+                if raw_src and raw_src.lower() not in ["none", "n/a", "null", "no document", "erp", "attendance record", "live attendance", "system"]:
+                    for s in (list(sources_set) or [p.name for p in kb_dir.glob("*.md")]):
+                        clean_check = raw_src.lower().replace(".md", "").replace("_", " ")
+                        if clean_check in s.lower().replace("_", " ") or s.lower().replace(".md", "").replace("_", " ") in clean_check:
+                            extracted_source = s
+                            break
 
         # Intelligent Grounding Fallback:
-        # If Gemini answered an informational campus question (not greeting/casual/personal attendance)
-        # and we retrieved high-confidence institutional documents, attach the top retrieved source!
+        # If Gemini answered an informational campus question and we retrieved institutional documents,
+        # attach the primary retrieved source!
         if not extracted_source and sources_set:
-            q_lower = query.lower()
-            casual_terms = ["hi", "hello", "hey", "who are you", "what can you do", "help", "thank you", "thanks"]
+            q_lower = query.lower().strip()
+            casual_terms = ["hi", "hello", "hey", "hola", "yo", "who are you", "what can you do", "help me", "thank you", "thanks"]
             is_casual = any(q_lower == t or q_lower.startswith(t + " ") for t in casual_terms)
-            is_personal_att = any(k in q_lower for k in ["my attendance", "my percentage", "how many classes", "am i detained", "my ticket", "my grievance"])
             
-            if not is_casual and not is_personal_att:
-                # Assign the most relevant retrieved source
+            # If not pure greeting, attach retrieved source from knowledge base
+            if not is_casual:
                 extracted_source = list(sources_set)[0]
 
         # Post-processing: Strictly remove any bunk or safe bunk lines

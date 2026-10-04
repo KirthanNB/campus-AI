@@ -16,10 +16,15 @@ import InteractiveTicketCard from '../components/InteractiveTicketCard';
 
 export default function ChatPage() {
   const navigate = useNavigate();
-  const { user, logout, token } = useAuthStore();
+  const { user, logout } = useAuthStore();
 
-  // Navigation & UI state: default collapsed so that the chat conversation is always immediately front-and-center
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Navigation & UI state: collapsed by default on mobile/tablet (< 1024px)
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 1024;
+    }
+    return false;
+  });
   const [activeModal, setActiveModal] = useState(null); // 'attendance' | 'timetable' | 'grievance' | 'news' | 'citation'
   const [citationData, setCitationData] = useState(null);
 
@@ -42,70 +47,16 @@ export default function ChatPage() {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Ensure sidebar is collapsed by default on mobile screens upon signing in or resizing
+  // Auto-collapse sidebar on smaller screens during window resize
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 1024) {
         setSidebarOpen(false);
       }
     };
-
-    // Run on initial mount
-    if (window.innerWidth < 1024) {
-      setSidebarOpen(false);
-    }
-
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  // Click outside to close profile card
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
-        setShowProfileMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Keyboard shortcut listener (Cmd/Ctrl + K for new chat, Esc to clear)
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        handleNewChat();
-      } else if (e.key === 'Escape') {
-        setInputPrompt('');
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  // Initial data loading
-  useEffect(() => {
-    loadSessions();
-    loadStudentContext();
-  }, [user]);
-
-  // Load chat sessions from backend
-  const loadSessions = async () => {
-    try {
-      const data = await api.getChatSessions();
-      if (data && data.length > 0) {
-        setSessions(data);
-        if (!activeSessionId) {
-          selectSession(data[0].id, data[0].title);
-        }
-      } else {
-        handleNewChat(false);
-      }
-    } catch (err) {
-      console.error('Failed to load chat sessions:', err);
-    }
-  };
 
   // Load live student attendance and tickets metrics for sidebar badges
   const loadStudentContext = async () => {
@@ -156,7 +107,7 @@ export default function ChatPage() {
         setActiveSessionId(newSess.id);
         setActiveSessionTitle(newSess.title);
         setMessages([]);
-      } catch (err) {
+      } catch (_err) {
         setActiveSessionId(null);
         setActiveSessionTitle('New Copilot Chat');
         setMessages([]);
@@ -168,6 +119,54 @@ export default function ChatPage() {
     }
     inputRef.current?.focus();
   };
+
+  // Load chat sessions from backend
+  const loadSessions = async () => {
+    try {
+      const data = await api.getChatSessions();
+      if (data && data.length > 0) {
+        setSessions(data);
+        if (!activeSessionId) {
+          selectSession(data[0].id, data[0].title);
+        }
+      } else {
+        handleNewChat(false);
+      }
+    } catch (err) {
+      console.error('Failed to load chat sessions:', err);
+    }
+  };
+
+  // Click outside to close profile card
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Keyboard shortcut listener (Cmd/Ctrl + K for new chat, Esc to clear)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        handleNewChat();
+      } else if (e.key === 'Escape') {
+        setInputPrompt('');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Initial data loading
+  useEffect(() => {
+    loadSessions();
+    loadStudentContext();
+  }, [user]);
 
   // Delete chat session
   const handleDeleteSession = async (e, sessionId) => {
@@ -268,8 +267,16 @@ export default function ChatPage() {
       const langParam = preferredLanguage !== 'English' ? preferredLanguage : null;
       const res = await api.sendMessage(query, langParam, activeSessionId);
 
-      if (res.session_id && (!activeSessionId || activeSessionId !== res.session_id)) {
-        setActiveSessionId(res.session_id);
+      if (res.session_id) {
+        if (!activeSessionId || activeSessionId !== res.session_id) {
+          setActiveSessionId(res.session_id);
+        }
+        if (res.session_title) {
+          setActiveSessionTitle(res.session_title);
+          setSessions((prev) =>
+            prev.map((s) => (s.id === res.session_id ? { ...s, title: res.session_title } : s))
+          );
+        }
         loadSessions();
       }
 
@@ -910,7 +917,7 @@ export default function ChatPage() {
             // Assistant Response
             const hasSource = Boolean(msg.source && msg.source.trim());
             // Parse action tags like [ACTION:SHOW_COMPLAINT_FORM:Category|Title|Description]
-            const actionRegex = /\[ACTION:SHOW_COMPLAINT_FORM:([^\|\]]*)(?:\|([^\|\]]*))?(?:\|([^\]]*))?\]/i;
+            const actionRegex = /\[ACTION:SHOW_COMPLAINT_FORM:([^|\]]*)(?:\|([^|\]]*))?(?:\|([^\]]*))?\]/i;
             const actionMatch = msg.content.match(actionRegex);
             const displayContent = msg.content.replace(actionRegex, '').trim();
 
