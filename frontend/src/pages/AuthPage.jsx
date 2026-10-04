@@ -45,7 +45,7 @@ export default function AuthPage() {
       email: 'arjun.sharma@campus.edu',
       roll: '24CSE101',
       branch: 'CSE',
-      year: '1st Year',
+      year: '1st',
       batch: '2024-2028',
       hostel: 'Hostel Block A',
       phone: '+91 98765 43210',
@@ -55,7 +55,7 @@ export default function AuthPage() {
       email: 'priya.patel@campus.edu',
       roll: '23ECE044',
       branch: 'ECE',
-      year: '2nd Year',
+      year: '2nd',
       batch: '2023-2027',
       hostel: 'Day Scholar',
       phone: '+91 98765 43211',
@@ -65,7 +65,7 @@ export default function AuthPage() {
       email: 'rahul.verma@campus.edu',
       roll: '22MEC012',
       branch: 'MECH',
-      year: '3rd Year',
+      year: '3rd',
       batch: '2022-2026',
       hostel: 'Hostel Block B',
       phone: '+91 98765 43212',
@@ -174,13 +174,23 @@ export default function AuthPage() {
     setStatusMessage({ type: 'info', text: 'Grounding university vectors and student persona...' });
 
     try {
+      const normalizedYear = current_year.includes('1')
+        ? '1st'
+        : current_year.includes('2')
+        ? '2nd'
+        : current_year.includes('3')
+        ? '3rd'
+        : current_year.includes('4')
+        ? '4th'
+        : '1st';
+
       const res = await api.register({
         full_name: full_name.trim(),
         email: email.trim().toLowerCase(),
         password: password.trim(),
         student_id: student_id.trim().toUpperCase(),
-        branch: branch.trim(),
-        current_year: current_year.trim(),
+        branch: branch.trim().toUpperCase(),
+        current_year: normalizedYear,
         batch: batch.trim(),
         hostel_status: hostel_status.trim(),
         phone_number: phone_number ? phone_number.trim() : null,
@@ -592,10 +602,10 @@ export default function AuthPage() {
                       className="w-full h-10 px-3 bg-surface-container-low text-on-surface rounded-xl font-body-md text-body-md border border-surface-container-high focus:outline-none focus:bg-surface-container-lowest focus:border-primary transition-all cursor-pointer"
                     >
                       <option value="" disabled>Select Year</option>
-                      <option value="1st Year">1st Year (Freshman)</option>
-                      <option value="2nd Year">2nd Year (Sophomore)</option>
-                      <option value="3rd Year">3rd Year (Junior)</option>
-                      <option value="4th Year">4th Year (Senior)</option>
+                      <option value="1st">1st Year (Freshman)</option>
+                      <option value="2nd">2nd Year (Sophomore)</option>
+                      <option value="3rd">3rd Year (Junior)</option>
+                      <option value="4th">4th Year (Senior)</option>
                     </select>
                   </div>
 

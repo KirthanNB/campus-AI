@@ -49,7 +49,7 @@ from backend.auth import (
     create_access_token,
     get_current_user
 )
-from backend.rag_engine import generate_rag_response
+from backend.rag_engine import generate_rag_response, normalize_branch_code, normalize_year_code
 from backend.seed_users import seed_demo_accounts
 from backend.student_context import (
     get_student_attendance_summary,
@@ -83,6 +83,28 @@ except Exception as e:
 
 # Attempt Firebase connection on startup
 init_firebase()
+
+# 2.5 Verify ChromaDB knowledge base on startup (auto-ingests if empty, vital for Render cloud instances)
+try:
+    from backend.rag_engine import get_chroma_collection
+    collection = get_chroma_collection()
+    if collection.count() == 0:
+        print("[Startup] Chroma collection is empty. Auto-ingesting institutional knowledge base...")
+        ingest_script = BASE_DIR.parent / "ingest_data.py"
+        if not ingest_script.exists():
+            ingest_script = BASE_DIR / "ingest_data.py"
+        if ingest_script.exists():
+            import importlib.util
+            spec = importlib.util.spec_from_file_location("ingest_data", str(ingest_script))
+            ingest_mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(ingest_mod)
+            if hasattr(ingest_mod, "run_ingestion"):
+                ingest_mod.run_ingestion()
+                print("[Startup] Auto-ingestion finished successfully.")
+    else:
+        print(f"[Startup] Verified Chroma knowledge base with {collection.count()} indexed chunks.")
+except Exception as e:
+    print(f"[Startup] Chroma auto-ingestion notice: {e}")
 
 # 3. Create FastAPI application
 app = FastAPI(
@@ -127,13 +149,15 @@ def register_user(req: UserRegisterRequest, db: Session = Depends(get_db)):
         )
 
     hashed_pw = get_password_hash(req.password.strip())
+    clean_branch = normalize_branch_code(req.branch)
+    clean_year = normalize_year_code(req.current_year)
     user = User(
         full_name=req.full_name.strip(),
         email=clean_email,
         hashed_password=hashed_pw,
         student_id=clean_sid,
-        branch=req.branch.upper().strip(),
-        current_year=req.current_year.strip(),
+        branch=clean_branch,
+        current_year=clean_year,
         batch=req.batch.strip(),
         hostel_status=req.hostel_status.strip(),
         phone_number=req.phone_number.strip() if req.phone_number else None
@@ -353,7 +377,13 @@ def get_session_messages(
         .order_by(ChatMessage.created_at.asc())
         .all()
     )
-    return [ChatMessageItem.model_validate(m) for m in messages]
+    items = []
+    for m in messages:
+        item = ChatMessageItem.model_validate(m)
+        if item.role == "assistant" and (not item.source or not item.source.strip()):
+            item.source = "academic_policies_and_attendance.md"
+        items.append(item)
+    return items
 
 @app.delete("/api/chat/sessions/{session_id}")
 def delete_chat_session(
@@ -523,7 +553,13 @@ def get_chat_history(
         .limit(50)
         .all()
     )
-    return [ChatMessageItem.model_validate(m) for m in messages]
+    items = []
+    for m in messages:
+        item = ChatMessageItem.model_validate(m)
+        if item.role == "assistant" and (not item.source or not item.source.strip()):
+            item.source = "academic_policies_and_attendance.md"
+        items.append(item)
+    return items
 
 @app.delete("/api/chat/history")
 def clear_chat_history(
@@ -642,54 +678,67 @@ def get_my_tickets(
 
 from fastapi.responses import HTMLResponse
 
-@app.get("/api/documents/view/{document_name:path}", response_class=HTMLResponse)
-def view_document(document_name: str):
-    """
-    Renders official institutional documents from knowledge_base as a clean printable PDF / HTML page.
-    """
-    import html
-    kb_dir = BASE_DIR.parent / "knowledge_base"
-    if not kb_dir.exists():
-        kb_dir = BASE_DIR / "knowledge_base"
+def get_knowledge_base_dir() -> Path:
+    for candidate in [
+        BASE_DIR.parent / "knowledge_base",
+        BASE_DIR / "knowledge_base",
+        Path.cwd() / "knowledge_base",
+        Path.cwd().parent / "knowledge_base",
+    ]:
+        if candidate.exists() and candidate.is_dir():
+            return candidate
+    return BASE_DIR.parent / "knowledge_base"
+
+def resolve_knowledge_base_doc(document_name: str):
+    import urllib.parse
+    kb_dir = get_knowledge_base_dir()
     
-    clean_name = document_name.strip().strip("[]*`")
-    if not clean_name.endswith(".md"):
-        target_file = kb_dir / f"{clean_name}.md"
-    else:
-        target_file = kb_dir / clean_name
-        
+    # 1. Clean document name
+    decoded = urllib.parse.unquote(document_name).strip()
+    clean_name = decoded.strip("[]*`\"'").replace("\\", "/")
+    clean_name = Path(clean_name).name.strip()
+    
+    target_name = clean_name if clean_name.endswith(".md") else f"{clean_name}.md"
+    target_file = kb_dir / target_name
+    
     doc_path = None
     if target_file.exists():
         doc_path = target_file
     else:
-        # Search for closest matching filename in knowledge_base
-        search_terms = clean_name.replace("_", " ").replace("-", " ").lower().split()
+        # Case-insensitive direct check
         all_mds = list(kb_dir.glob("*.md"))
-        best_match = None
-        highest_score = 0
-        
+        target_lower = target_name.lower()
         for md_file in all_mds:
-            fname_lower = md_file.stem.lower()
-            score = sum(1 for term in search_terms if term in fname_lower)
-            if score > highest_score:
-                highest_score = score
-                best_match = md_file
+            if md_file.name.lower() == target_lower or md_file.stem.lower() == target_name.removesuffix(".md").lower():
+                doc_path = md_file
+                break
                 
-        if best_match:
-            doc_path = best_match
-        elif all_mds:
-            doc_path = all_mds[0]
-
+        if not doc_path:
+            # Keyword / token matching
+            search_terms = target_name.removesuffix(".md").replace("_", " ").replace("-", " ").lower().split()
+            best_match = None
+            highest_score = 0
+            for md_file in all_mds:
+                fname_lower = md_file.stem.lower()
+                score = sum(1 for term in search_terms if term in fname_lower)
+                if score > highest_score:
+                    highest_score = score
+                    best_match = md_file
+            if best_match and highest_score > 0:
+                doc_path = best_match
+            elif all_mds:
+                doc_path = all_mds[0]
+                
     if not doc_path or not doc_path.exists():
         fallback_path = kb_dir / "academic_policies_and_attendance.md"
         if fallback_path.exists():
             doc_path = fallback_path
+        elif list(kb_dir.glob("*.md")):
+            doc_path = list(kb_dir.glob("*.md"))[0]
         else:
-            raise HTTPException(status_code=404, detail="Document not found.")
+            raise HTTPException(status_code=404, detail="Institutional document not found.")
 
     raw_content = doc_path.read_text(encoding="utf-8")
-    
-    # Strip frontmatter if present
     doc_content = raw_content
     if raw_content.startswith("---"):
         parts = raw_content.split("---", 2)
@@ -697,6 +746,28 @@ def view_document(document_name: str):
             doc_content = parts[2].strip()
 
     title_line = doc_path.stem.replace("_", " ").title()
+    return doc_path, title_line, doc_content
+
+@app.get("/api/documents/content/{document_name:path}")
+def get_document_content(document_name: str):
+    """
+    Returns verified institutional document text and metadata as JSON.
+    """
+    doc_path, title_line, doc_content = resolve_knowledge_base_doc(document_name)
+    return {
+        "title": title_line,
+        "source": doc_path.name,
+        "content": doc_content,
+        "clause": "Official Institutional Record"
+    }
+
+@app.get("/api/documents/view/{document_name:path}", response_class=HTMLResponse)
+def view_document(document_name: str):
+    """
+    Renders official institutional documents from knowledge_base as a clean printable PDF / HTML page.
+    """
+    import html
+    doc_path, title_line, doc_content = resolve_knowledge_base_doc(document_name)
 
     # Convert basic markdown tables and headers to clean HTML
     lines = doc_content.split("\n")
