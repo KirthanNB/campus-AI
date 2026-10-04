@@ -255,25 +255,30 @@ export default function ChatPage() {
       const res = await api.sendMessage(query, langParam, activeSessionId);
 
       if (res.session_id) {
-        const updatedTitle = res.session_title;
-        setActiveSessionId(res.session_id);
-        if (updatedTitle) {
-          setActiveSessionTitle(updatedTitle);
-          setSessions((prev) => {
-            const exists = prev.some((s) => s.id === res.session_id);
-            if (exists) {
-              return prev.map((s) => (s.id === res.session_id ? { ...s, title: updatedTitle } : s));
-            } else {
-              return [{ id: res.session_id, title: updatedTitle, created_at: new Date().toISOString() }, ...prev];
-            }
-          });
-        }
-        // Silently sync sessions list in background without overriding active state
-        api.getChatSessions().then((data) => {
-          if (data && data.length > 0) {
-            setSessions(data);
+        const newSessionId = res.session_id;
+        const updatedTitle = res.session_title || 'New Chat';
+        setActiveSessionId(newSessionId);
+        setActiveSessionTitle(updatedTitle);
+
+        // Update local session list immediately
+        setSessions((prev) => {
+          const exists = prev.some((s) => s.id === newSessionId);
+          if (exists) {
+            return prev.map((s) => (s.id === newSessionId ? { ...s, title: updatedTitle } : s));
+          } else {
+            return [{ id: newSessionId, title: updatedTitle, created_at: new Date().toISOString() }, ...prev];
           }
-        }).catch((err) => console.log('Session sync notice:', err));
+        });
+
+        // Fetch fresh list from server and update state
+        try {
+          const freshSessions = await api.getChatSessions();
+          if (freshSessions && freshSessions.length > 0) {
+            setSessions(freshSessions);
+          }
+        } catch (syncErr) {
+          console.log('Session sync notice:', syncErr);
+        }
       }
 
       // Immediately render AI response without artificial delays
