@@ -65,7 +65,7 @@ frontend/.cache/
 *.sqlite3
 *.db
 backend/campusmind.db
-backend/chroma_db/
+# chroma_db is committed so Render has the pre-built index without needing to re-ingest
 
 # ==========================================
 # IDE & Operating System Files

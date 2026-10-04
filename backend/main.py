@@ -84,27 +84,17 @@ except Exception as e:
 # Attempt Firebase connection on startup
 init_firebase()
 
-# 2.5 Verify ChromaDB knowledge base on startup (auto-ingests if empty, vital for Render cloud instances)
+# 2.5 Verify ChromaDB knowledge base on startup (chroma_db is committed to git, always present)
 try:
     from backend.rag_engine import get_chroma_collection
     collection = get_chroma_collection()
-    if collection.count() == 0:
-        print("[Startup] Chroma collection is empty. Auto-ingesting institutional knowledge base...")
-        ingest_script = BASE_DIR.parent / "ingest_data.py"
-        if not ingest_script.exists():
-            ingest_script = BASE_DIR / "ingest_data.py"
-        if ingest_script.exists():
-            import importlib.util
-            spec = importlib.util.spec_from_file_location("ingest_data", str(ingest_script))
-            ingest_mod = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(ingest_mod)
-            if hasattr(ingest_mod, "run_ingestion"):
-                ingest_mod.run_ingestion()
-                print("[Startup] Auto-ingestion finished successfully.")
+    count = collection.count()
+    if count > 0:
+        print(f"[Startup] Chroma knowledge base ready: {count} indexed chunks.")
     else:
-        print(f"[Startup] Verified Chroma knowledge base with {collection.count()} indexed chunks.")
+        print("[Startup] WARNING: Chroma collection is empty. RAG will use keyword-based source fallback.")
 except Exception as e:
-    print(f"[Startup] Chroma auto-ingestion notice: {e}")
+    print(f"[Startup] Chroma verification notice: {e}")
 
 # 3. Create FastAPI application
 app = FastAPI(
