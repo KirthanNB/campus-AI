@@ -260,9 +260,17 @@ def get_or_create_chat_session(user_id: int, session_id: Optional[str], initial_
         if existing:
             return existing
 
-    # Create new session
+    # Create new session with smart title extraction
     new_id = f"sess_{uuid.uuid4().hex[:12]}"
-    clean_title = (initial_title[:32] + "...") if len(initial_title) > 32 else (initial_title or "New Chat")
+    raw_prompt = " ".join((initial_title or "New Chat").strip().split())
+    clean_p = raw_prompt
+    for prefix in ["can you tell me about ", "tell me about ", "what is ", "what are ", "how to ", "how can i ", "can you please ", "please "]:
+        if clean_p.lower().startswith(prefix) and len(clean_p) > len(prefix):
+            clean_p = clean_p[len(prefix):]
+            break
+    clean_title = (clean_p[:36] + "...") if len(clean_p) > 36 else (clean_p or "New Chat")
+    clean_title = clean_title[0].upper() + clean_title[1:] if len(clean_title) > 0 else "New Chat"
+
     new_sess = ChatSession(
         id=new_id,
         user_id=user_id,

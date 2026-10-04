@@ -96,27 +96,14 @@ export default function ChatPage() {
   };
 
   // Create or reset to a new chat
-  const handleNewChat = async (createRemote = true) => {
+  const handleNewChat = () => {
     if (window.innerWidth < 1024) {
       setSidebarOpen(false);
     }
-    if (createRemote) {
-      try {
-        const newSess = await api.createChatSession('New Copilot Chat');
-        setSessions((prev) => [newSess, ...prev]);
-        setActiveSessionId(newSess.id);
-        setActiveSessionTitle(newSess.title);
-        setMessages([]);
-      } catch (_err) {
-        setActiveSessionId(null);
-        setActiveSessionTitle('New Copilot Chat');
-        setMessages([]);
-      }
-    } else {
-      setActiveSessionId(null);
-      setActiveSessionTitle('New Copilot Chat');
-      setMessages([]);
-    }
+    // Set to null so the very next message automatically creates a named session
+    setActiveSessionId(null);
+    setActiveSessionTitle('New Chat');
+    setMessages([]);
     inputRef.current?.focus();
   };
 
