@@ -231,7 +231,7 @@ export default function AuthPage() {
                 100% Accurate, <span className="text-primary-container">Citation-Backed</span> Answers for Your Exact Branch &amp; Semester.
               </h1>
               <p className="font-body-lg text-body-lg text-on-surface-variant max-w-xl">
-                Direct deterministic ingestion of your faculty syllabi, grade regulations, real-time timetable shifts, and authorized circulars.
+                Direct deterministic ingestion of your faculty syllabus, grade regulations, real-time timetable shifts, and authorized circulars.
               </p>
             </header>
 
@@ -343,8 +343,8 @@ export default function AuthPage() {
                   setStatusMessage(null);
                 }}
                 className={`flex-1 py-2 text-center font-label-md text-label-md rounded-lg transition-all cursor-pointer ${activeTab === 'signin'
-                    ? 'font-semibold bg-surface-container-lowest text-primary shadow-xs'
-                    : 'text-on-surface-variant hover:text-on-surface'
+                  ? 'font-semibold bg-surface-container-lowest text-primary shadow-xs'
+                  : 'text-on-surface-variant hover:text-on-surface'
                   }`}
               >
                 Sign In
@@ -356,8 +356,8 @@ export default function AuthPage() {
                   setStatusMessage(null);
                 }}
                 className={`flex-1 py-2 text-center font-label-md text-label-md rounded-lg transition-all cursor-pointer ${activeTab === 'signup'
-                    ? 'font-semibold bg-surface-container-lowest text-primary shadow-xs'
-                    : 'text-on-surface-variant hover:text-on-surface'
+                  ? 'font-semibold bg-surface-container-lowest text-primary shadow-xs'
+                  : 'text-on-surface-variant hover:text-on-surface'
                   }`}
               >
                 Create Account (Student)
@@ -384,10 +384,10 @@ export default function AuthPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   className={`p-space-sm rounded-xl font-body-sm text-body-sm flex items-center gap-2 border ${statusMessage.type === 'success'
-                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                      : statusMessage.type === 'error'
-                        ? 'bg-rose-50 text-rose-800 border-rose-200'
-                        : 'bg-primary-fixed/50 text-primary border-primary-fixed'
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                    : statusMessage.type === 'error'
+                      ? 'bg-rose-50 text-rose-800 border-rose-200'
+                      : 'bg-primary-fixed/50 text-primary border-primary-fixed'
                     }`}
                 >
                   <span className="material-symbols-outlined text-[18px]">
