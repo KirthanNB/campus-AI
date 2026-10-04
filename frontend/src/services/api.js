@@ -17,10 +17,26 @@ function getAuthHeaders() {
   return headers;
 }
 
+async function fetchWithTimeout(url, options = {}, timeoutMs = 25000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetchWithTimeout(url, { ...options, signal: controller.signal });
+    clearTimeout(timer);
+    return res;
+  } catch (err) {
+    clearTimeout(timer);
+    if (err.name === 'AbortError') {
+      throw new Error('Connection timed out. The server may be waking up, please try again.');
+    }
+    throw err;
+  }
+}
+
 export const api = {
   // Authentication
   async register(userData) {
-    const res = await fetch(`${API_BASE}/auth/register`, {
+    const res = await fetchWithTimeout(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData),
@@ -33,7 +49,7 @@ export const api = {
   },
 
   async login(credentials) {
-    const res = await fetch(`${API_BASE}/auth/login`, {
+    const res = await fetchWithTimeout(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials),
@@ -46,7 +62,7 @@ export const api = {
   },
 
   async getProfile() {
-    const res = await fetch(`${API_BASE}/user/profile`, {
+    const res = await fetchWithTimeout(`${API_BASE}/user/profile`, {
       headers: getAuthHeaders(),
     });
     const data = await res.json();
@@ -58,7 +74,7 @@ export const api = {
 
   // Chat & RAG
   async sendMessage(message, preferredLanguage = null, sessionId = null) {
-    const res = await fetch(`${API_BASE}/chat`, {
+    const res = await fetchWithTimeout(`${API_BASE}/chat`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({
@@ -75,7 +91,7 @@ export const api = {
   },
 
   async getChatSessions() {
-    const res = await fetch(`${API_BASE}/chat/sessions`, {
+    const res = await fetchWithTimeout(`${API_BASE}/chat/sessions`, {
       headers: getAuthHeaders(),
     });
     const data = await res.json();
@@ -86,7 +102,7 @@ export const api = {
   },
 
   async createChatSession(title = 'New Chat') {
-    const res = await fetch(`${API_BASE}/chat/sessions`, {
+    const res = await fetchWithTimeout(`${API_BASE}/chat/sessions`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ title }),
@@ -99,7 +115,7 @@ export const api = {
   },
 
   async getSessionMessages(sessionId) {
-    const res = await fetch(`${API_BASE}/chat/sessions/${sessionId}/messages`, {
+    const res = await fetchWithTimeout(`${API_BASE}/chat/sessions/${sessionId}/messages`, {
       headers: getAuthHeaders(),
     });
     const data = await res.json();
@@ -110,7 +126,7 @@ export const api = {
   },
 
   async deleteChatSession(sessionId) {
-    const res = await fetch(`${API_BASE}/chat/sessions/${sessionId}`, {
+    const res = await fetchWithTimeout(`${API_BASE}/chat/sessions/${sessionId}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
@@ -122,7 +138,7 @@ export const api = {
   },
 
   async getChatHistory() {
-    const res = await fetch(`${API_BASE}/chat/history`, {
+    const res = await fetchWithTimeout(`${API_BASE}/chat/history`, {
       headers: getAuthHeaders(),
     });
     const data = await res.json();
@@ -133,7 +149,7 @@ export const api = {
   },
 
   async clearChatHistory() {
-    const res = await fetch(`${API_BASE}/chat/history`, {
+    const res = await fetchWithTimeout(`${API_BASE}/chat/history`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
@@ -146,7 +162,7 @@ export const api = {
 
   // Tickets & Grievance Actions
   async createTicket(ticketData) {
-    const res = await fetch(`${API_BASE}/tickets/create`, {
+    const res = await fetchWithTimeout(`${API_BASE}/tickets/create`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(ticketData),
@@ -159,7 +175,7 @@ export const api = {
   },
 
   async getMyTickets() {
-    const res = await fetch(`${API_BASE}/tickets/my-tickets`, {
+    const res = await fetchWithTimeout(`${API_BASE}/tickets/my-tickets`, {
       headers: getAuthHeaders(),
     });
     const data = await res.json();
@@ -175,7 +191,7 @@ export const api = {
 
   // Dynamic Student Endpoints
   async getAttendance() {
-    const res = await fetch(`${API_BASE}/student/attendance`, {
+    const res = await fetchWithTimeout(`${API_BASE}/student/attendance`, {
       headers: getAuthHeaders(),
     });
     const data = await res.json();
@@ -186,7 +202,7 @@ export const api = {
   },
 
   async getCourses() {
-    const res = await fetch(`${API_BASE}/student/courses`, {
+    const res = await fetchWithTimeout(`${API_BASE}/student/courses`, {
       headers: getAuthHeaders(),
     });
     const data = await res.json();
@@ -197,7 +213,7 @@ export const api = {
   },
 
   async getNews() {
-    const res = await fetch(`${API_BASE}/student/news`, {
+    const res = await fetchWithTimeout(`${API_BASE}/student/news`, {
       headers: getAuthHeaders(),
     });
     const data = await res.json();
@@ -208,7 +224,7 @@ export const api = {
   },
 
   async getFirebaseStatus() {
-    const res = await fetch(`${API_BASE}/firebase/status`);
+    const res = await fetchWithTimeout(`${API_BASE}/firebase/status`);
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.detail || 'Failed to fetch Firebase status');

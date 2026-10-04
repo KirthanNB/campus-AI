@@ -34,18 +34,14 @@ export const useAuthStore = create((set, get) => ({
   fetchProfile: async () => {
     const token = get().token;
     if (!token) return;
-    // If we already have a cached user, avoid blocking spinner
-    if (!get().user) {
-      set({ isLoading: true });
-    }
     try {
       const profile = await api.getProfile();
       localStorage.setItem('campusmind_user', JSON.stringify(profile));
       set({ user: profile, isAuthenticated: true, isLoading: false });
     } catch (err) {
-      console.error('Failed to load user profile:', err);
-      // Only logout on 401 unauthorized
-      if (err.message && err.message.toLowerCase().includes('authenticated')) {
+      console.warn('Background profile sync note:', err.message || err);
+      // Only logout on explicit 401 unauthorized
+      if (err.message && (err.message.includes('401') || err.message.toLowerCase().includes('not authenticated'))) {
         get().logout();
       }
       set({ isLoading: false });
