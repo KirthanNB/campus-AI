@@ -388,8 +388,25 @@ async def chat_endpoint(
     generic_titles = ["new chat", "new copilot chat", "new conversation", "copilot chat"]
     current_title_lower = (session.title or "").strip().lower()
     if current_title_lower in generic_titles or current_title_lower.startswith("new "):
-        new_title = (req.message[:32] + "...") if len(req.message) > 32 else req.message
+        # Generate clean summary title based on the user's actual prompt
+        clean_prompt = " ".join(req.message.strip().split())
+        # Remove common greeting prefixes if prompt continues
+        lower_prompt = clean_prompt.lower()
+        for prefix in ["can you tell me about ", "tell me about ", "what is ", "what are ", "how to ", "how can i ", "can you please ", "please "]:
+            if lower_prompt.startswith(prefix) and len(clean_prompt) > len(prefix):
+                clean_prompt = clean_prompt[len(prefix):]
+                break
+
+        # Capitalize and trim cleanly
+        new_title = clean_prompt[:36].strip()
+        if len(clean_prompt) > 36:
+            new_title += "..."
+        new_title = new_title[0].upper() + new_title[1:] if len(new_title) > 0 else "New Chat"
+
         session.title = new_title
+        db.add(session)
+        db.commit()
+        db.refresh(session)
         try:
             save_chat_session_to_firebase({
                 "id": session.id,
