@@ -218,7 +218,7 @@ export default function AuthPage() {
                   <div className="flex items-center gap-space-xs">
                     <span className="font-headline-lg text-headline-lg text-on-surface tracking-tight">CampusMind AI</span>
                     <span className="bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
-                      v3.4 Production
+                      Production
                     </span>
                   </div>
                   <p className="font-label-md text-label-md text-primary font-medium">
@@ -342,11 +342,10 @@ export default function AuthPage() {
                   setActiveTab('signin');
                   setStatusMessage(null);
                 }}
-                className={`flex-1 py-2 text-center font-label-md text-label-md rounded-lg transition-all cursor-pointer ${
-                  activeTab === 'signin'
+                className={`flex-1 py-2 text-center font-label-md text-label-md rounded-lg transition-all cursor-pointer ${activeTab === 'signin'
                     ? 'font-semibold bg-surface-container-lowest text-primary shadow-xs'
                     : 'text-on-surface-variant hover:text-on-surface'
-                }`}
+                  }`}
               >
                 Sign In
               </button>
@@ -356,11 +355,10 @@ export default function AuthPage() {
                   setActiveTab('signup');
                   setStatusMessage(null);
                 }}
-                className={`flex-1 py-2 text-center font-label-md text-label-md rounded-lg transition-all cursor-pointer ${
-                  activeTab === 'signup'
+                className={`flex-1 py-2 text-center font-label-md text-label-md rounded-lg transition-all cursor-pointer ${activeTab === 'signup'
                     ? 'font-semibold bg-surface-container-lowest text-primary shadow-xs'
                     : 'text-on-surface-variant hover:text-on-surface'
-                }`}
+                  }`}
               >
                 Create Account (Student)
               </button>
@@ -385,20 +383,19 @@ export default function AuthPage() {
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
-                  className={`p-space-sm rounded-xl font-body-sm text-body-sm flex items-center gap-2 border ${
-                    statusMessage.type === 'success'
+                  className={`p-space-sm rounded-xl font-body-sm text-body-sm flex items-center gap-2 border ${statusMessage.type === 'success'
                       ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                       : statusMessage.type === 'error'
-                      ? 'bg-rose-50 text-rose-800 border-rose-200'
-                      : 'bg-primary-fixed/50 text-primary border-primary-fixed'
-                  }`}
+                        ? 'bg-rose-50 text-rose-800 border-rose-200'
+                        : 'bg-primary-fixed/50 text-primary border-primary-fixed'
+                    }`}
                 >
                   <span className="material-symbols-outlined text-[18px]">
                     {statusMessage.type === 'success'
                       ? 'check_circle'
                       : statusMessage.type === 'error'
-                      ? 'error'
-                      : 'sync'}
+                        ? 'error'
+                        : 'sync'}
                   </span>
                   <span>{statusMessage.text}</span>
                 </motion.div>
