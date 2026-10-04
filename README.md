@@ -1,4 +1,4 @@
-# 🎓 CampusMind AI
+# CampusMind AI
 ### Hyper-Personalized, Multilingual AI Copilot for College Students
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
@@ -10,19 +10,19 @@
 
 ---
 
-## 📌 Overview
+## Overview
 
 **CampusMind AI** is a production-grade, full-stack AI copilot designed to solve student information fragmentation. Rather than acting as a generic, robotic chatbot, CampusMind AI delivers **zero-hallucination, hyper-personalized answers** tailored directly to each student's branch, academic year, admission batch, and residential status.
 
 ---
 
-## 🌟 Key Features
+## Key Features
 
-### 1. ⚡ Dual-Path Cognitive Engine
+### 1. Dual-Path Cognitive Engine
 - **Instant Small-Talk Routing (<0.06s):** Greetings (`"hi"`, `"how are you?"`, `"who are you?"`), gratitude, and goodbyes respond immediately without invoking heavy vector searches or consuming LLM quota.
 - **Deep Academic RAG:** Real campus questions dynamically trigger ChromaDB vector similarity search filtered by student metadata.
 
-### 2. 🎯 Hyper-Personalized Zero-Shot Context Injection
+### 2. Hyper-Personalized Zero-Shot Context Injection
 - Captures 9 essential student attributes during onboarding:
   - **Full Name, Student ID / Roll Number**
   - **Branch:** CSE, ECE, MECH, EEE, CIVIL, IT
@@ -32,27 +32,27 @@
   - **Contact:** Email, Phone Number
 - **Silent Injection:** Context is passed silently to the AI so it never asks *"Which branch are you in?"* and never repeats the profile back robotically.
 
-### 3. 📅 Complete Academic Year Exam Timetables
+### 3. Complete Academic Year Exam Timetables
 - Comprehensive roadmaps covering **both Odd and Even Semesters**:
   - **Odd Semester (Autumn):** CAT-1 (Oct), CAT-2 (Nov), Lab Exams (Dec), FAT Finals (Dec)
   - **Even Semester (Spring):** CAT-1 (March), CAT-2 (April/May), Lab Exams (May), Spring FAT (May/June)
   - **Day 1 to Day 4 Subject Allocations:** Maps exact course codes and titles per branch and year (e.g., DSA, OS, Web Tech, RDBMS, AI/ML).
 
-### 4. 💰 Dynamic Fee Calculations
+### 4. Dynamic Fee Calculations
 - Differentiated tuition fees, lab consumables, digital library access, tech/cloud fees, admission caution deposits, and 4th-year capstone fees across all 6 engineering departments.
 - Hostel Block A & Block B boarding and multi-cuisine mess charges.
 
-### 5. 🌐 Multilingual Assistance
+### 5. Multilingual Assistance
 - Native language translation and response generation for **Hindi, Telugu, Tamil, Spanish, French, German**, and English.
 - Queries in regional languages are matched against English records and answered fluently in the requested language.
 
-### 6. 🛡️ Resilient Model Fallback Architecture
+### 6. Resilient Model Fallback Architecture
 - Primary model: **Gemini 3.8 Flash**.
 - Automatic failover across Google's high-efficiency model tiers (`gemini-3.7-flash` ➔ `gemini-3.6-flash` ➔ `gemini-3.5-flash-lite` ➔ `gemini-3.1-flash-lite` ➔ `gemini-2.5-flash`) ensuring 100% uptime even under high traffic or rate limits.
 
 ---
 
-## 🏗️ Architecture & Data Strategy
+##  Architecture & Data Strategy
 
 ```
                           ┌────────────────────────┐
@@ -95,7 +95,7 @@ The knowledge base is synthesized from the official curriculum (`base_curriculum
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Frontend:** React 19, Vite 8, Tailwind CSS, Lucide React, Zustand, Framer Motion, React Markdown, Remark GFM
 - **Backend:** FastAPI, Python 3.13, SQLAlchemy, SQLite, Pydantic v2, Bcrypt, PyJWT
@@ -104,7 +104,7 @@ The knowledge base is synthesized from the official curriculum (`base_curriculum
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - **Node.js** (v18 or higher) & **npm**
@@ -121,7 +121,7 @@ cd campus-AI
 
 ---
 
-### ⚡ Option A: 1-Click Automated Launch (Recommended)
+### Option A: 1-Click Automated Launch (Recommended)
 
 1. Paste your Gemini API key inside `.env` (copied from `.env.example`).
 2. Run the automated launcher:
@@ -132,7 +132,7 @@ cd campus-AI
 
 ---
 
-### 🛠️ Option B: Step-by-Step Manual Setup
+### Option B: Step-by-Step Manual Setup
 Copy the template `.env.example` files:
 ```bash
 # Root environment file
@@ -209,7 +209,7 @@ python tests/test_e2e.py
 
 ---
 
-## 🧪 Testing Personas for Evaluators & Judges
+## Testing Personas for Evaluators & Judges
 
 You can register with any profile or use these sample student profiles to test personalization:
 
@@ -222,7 +222,7 @@ You can register with any profile or use these sample student profiles to test p
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 campus-AI/
@@ -276,6 +276,6 @@ campus-AI/
 
 ---
 
-## 📄 License
+## License
 
 Open sourced under the [MIT License](LICENSE).
